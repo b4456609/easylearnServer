@@ -19,8 +19,6 @@ public class SyncTest {
 		ArrayList<SettingModel> al = new ArrayList<SettingModel>();
 
 		al.add(new SettingModel(true, true,"fweew","11565"));
-		al.add(new SettingModel(true, true,"fweew","11565"));
-		al.add(new SettingModel(true, true,"fweew","11565"));
 		al.add(new SettingModel(true, true,"fefee","eeee"));
 
 		System.out.println(al);
