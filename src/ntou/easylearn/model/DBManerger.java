@@ -132,24 +132,18 @@ public class DBManerger {
 	/**
 	 * get user's setting by user's id
 	 */
-	public String getSetting(String userId) {
+	public JSONObject getSetting(String userId) {
 		// create json object
 		JSONObject obj = new JSONObject();
 
 		try {
-			selectSQL = "SELECT `setting`.`wifi_sync`, `setting`.`mobile_network_sync`, `setting`.`last_sync_time`, `setting`.`user_id`"
+			selectSQL = "SELECT `setting`.`wifi_sync`, `setting`.`mobile_network_sync`, `setting`.`last_sync_time`"
 					+ " FROM `easylearn`.`setting`" + "WHERE `user_id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, userId);
 			rs = pStat.executeQuery();
 
-			while (rs.next()) {
-				obj.put("wifi_sync", rs.getBoolean("wifi_sync"));
-				obj.put("mobile_network_sync",
-						rs.getBoolean("mobile_network_sync"));
-				obj.put("last_sync_time", rs.getString("last_sync_time"));
-				obj.put("user_id", rs.getString("user_id"));
-			}
+			obj = ResultSetConverter.convert(rs).getJSONObject(0);
 		} catch (SQLException e) {
 			System.out.println("[DBManerger getSetting] Exception :"
 					+ e.toString());
@@ -159,7 +153,7 @@ public class DBManerger {
 		} finally {
 			closeDatabaseConnection();
 		}
-		return obj.toString();
+		return obj;
 	}
 
 	/**
@@ -331,27 +325,20 @@ public class DBManerger {
 	/**
 	 * get user's folder return json array
 	 */
-	public String getFolder(String userId) {
+	public JSONArray getFolder(String userId) {
 
-		JSONArray storeJsonArray = new JSONArray();
+		JSONArray jsonArray = new JSONArray();
 
 		try {
-			selectSQL = "SELECT `folder`.`id`,`folder`.`name`,`folder`.`user_id`FROM `easylearn`.`folder`"
+			selectSQL = "SELECT `folder`.`id`,`folder`.`name`,`folder`.`user_id`"
+					+ "FROM `easylearn`.`folder`"
 					+ "WHERE `user_id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, userId);
 			rs = pStat.executeQuery();
 
-			while (rs.next()) {
-				// create json object
-				JSONObject obj = new JSONObject();
-
-				obj.put("id", rs.getString("id"));
-				obj.put("name", rs.getString("name"));
-				obj.put("user_id", rs.getString("user_id"));
-
-				storeJsonArray.put(obj);
-			}
+			jsonArray = ResultSetConverter.convert(rs);
+			
 		} catch (SQLException e) {
 			System.out.println("[DBManerger getFolder] Exception :"
 					+ e.toString());
@@ -361,8 +348,63 @@ public class DBManerger {
 		} finally {
 			closeDatabaseConnection();
 		}
-		return storeJsonArray.toString();
+		return jsonArray;
 	}
+	
+	public JSONArray getPackIDArray(String userId, String folderId) {
+
+		JSONArray jsonArray = new JSONArray();
+
+		try {
+			selectSQL = "SELECT `pack_id` "
+					+ "FROM `easylearn`.`folder_has_pack`"
+					+ "WHERE `folder_user_id`=? and `folder_id`=?";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			pStat.setString(1, userId);
+			pStat.setString(2, folderId);
+			rs = pStat.executeQuery();
+
+			jsonArray = ResultSetConverter.convert(rs);
+			
+		} catch (SQLException e) {
+			System.out.println("[DBManerger getPackIDArray] Exception :"
+					+ e.toString());
+		} catch (JSONException e) {
+			System.out.print("[DBManerger getPackIDArray] Exception :");
+			e.printStackTrace();
+		} finally {
+			closeDatabaseConnection();
+		}
+		return jsonArray;
+	}
+	
+	public JSONArray getPackIDArray(String userId) {
+
+		JSONArray jsonArray = new JSONArray();
+
+		try {
+			selectSQL = "SELECT  `pack_id` "
+					+ "FROM `easylearn`.`folder_has_pack`"
+					+ "WHERE `folder_user_id`=?";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			pStat.setString(1, userId);
+			rs = pStat.executeQuery();
+
+			jsonArray = ResultSetConverter.convert(rs);
+			
+		} catch (SQLException e) {
+			System.out.println("[DBManerger getPackIDArray] Exception :"
+					+ e.toString());
+		} catch (JSONException e) {
+			System.out.print("[DBManerger getPackIDArray] Exception :");
+			e.printStackTrace();
+		} finally {
+			closeDatabaseConnection();
+		}
+		return jsonArray;
+	}
+	
+	
 
 	public String getUserHasVersion(String UserId) {
 		JSONArray storeJsonArray = new JSONArray();
@@ -654,25 +696,17 @@ public class DBManerger {
 	/**
 	 * get file with version id
 	 */
-	public String getFile(String version_id) {
-		JSONArray storeJsonArray = new JSONArray();
+	public JSONArray getFile(String version_id) {
+		JSONArray jsonArray = new JSONArray();
 
 		try {
-			selectSQL = "SELECT `filename`, `version_id`, `version_pack_id` FROM `easylearn`.`file` WHERE `version_id`=?";
+			selectSQL = "SELECT `filename` FROM `easylearn`.`file` WHERE `version_id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, version_id);
 			rs = pStat.executeQuery();
 
-			while (rs.next()) {
-				// create json object
-				JSONObject obj = new JSONObject();
-
-				obj.put("filename", rs.getString("filename"));
-				obj.put("version_id", rs.getString("version_id"));
-				obj.put("version_pack_id", rs.getString("version_pack_id"));
-
-				storeJsonArray.put(obj);
-			}
+			jsonArray = ResultSetConverter.convert(rs);
+			
 		} catch (SQLException e) {
 			System.out.println("[DBManerger getFile] Exception :"
 					+ e.toString());
@@ -682,34 +716,26 @@ public class DBManerger {
 		} finally {
 			closeDatabaseConnection();
 		}
-		return storeJsonArray.toString();
+		return jsonArray;
 	}
 
 	/**
 	 * getNote by id
 	 */
-	public String getNote(String noteId) {
-		JSONArray storeJsonArray = new JSONArray();
+	public JSONArray getNotes(String versionId) {
+		JSONArray jsonArray = new JSONArray();
 
 		try {
-			selectSQL = "SELECT `id`, `color`, `content`, `create_time`, `user_id` FROM `easylearn`.`note`"
-					+ "WHERE `id`=?";
+			selectSQL = "SELECT`note`.`id`, `color`, `content`, `note`.`create_time`, `user_id` "
+					+ "FROM `easylearn`.`note`"
+					+ "INNER JOIN `easylearn`.`version_has_note` ON `note`.`id`=`version_has_note`.`note_id`"
+					+ "INNER JOIN `easylearn`.`user` ON `note`.`user_id`=`user`.`id`"
+					+ "WHERE `version_id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
-			pStat.setString(1, noteId);
+			pStat.setString(1, versionId);
 			rs = pStat.executeQuery();
 
-			while (rs.next()) {
-				// create json object
-				JSONObject obj = new JSONObject();
-
-				obj.put("id", rs.getString("id"));
-				obj.put("color", rs.getString("color"));
-				obj.put("content", rs.getString("content"));
-				obj.put("create_time", rs.getString("create_time"));
-				obj.put("user_id", rs.getString("user_id"));
-
-				storeJsonArray.put(obj);
-			}
+			jsonArray = ResultSetConverter.convert(rs);
 		} catch (SQLException e) {
 			System.out.println("[DBManerger getNote] Exception :"
 					+ e.toString());
@@ -719,7 +745,7 @@ public class DBManerger {
 		} finally {
 			closeDatabaseConnection();
 		}
-		return storeJsonArray.toString();
+		return jsonArray;
 	}
 
 	/**
@@ -843,29 +869,20 @@ public class DBManerger {
 	/**
 	 * get comment with note_id
 	 */
-	public String getComment(String note_id) {
+	public JSONArray getComment(String note_id) {
 
-		JSONArray storeJsonArray = new JSONArray();
+		JSONArray jsonArray = new JSONArray();
 
 		try {
-			selectSQL = "SELECT `id`,`content`,`create_time`,`note_id`,`name`,`user_id` FROM `easylearn`.`comment_with_name` WHERE `note_id`=?";
+			selectSQL = "SELECT `id`,`content`,`create_time`,`note_id`,`name`"
+					+ "FROM `easylearn`.`comment_with_name` "
+					+ "WHERE `note_id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, note_id);
 			rs = pStat.executeQuery();
 
-			while (rs.next()) {
-				// create json object
-				JSONObject obj = new JSONObject();
-
-				obj.put("id", rs.getString("id"));
-				obj.put("content", rs.getString("content"));
-				obj.put("create_time", rs.getString("create_time"));
-				obj.put("note_id", rs.getString("content"));
-				obj.put("user_id", rs.getString("user_id"));
-				obj.put("name", rs.getString("name"));
-
-				storeJsonArray.put(obj);
-			}
+			jsonArray = ResultSetConverter.convert(rs);
+			
 		} catch (SQLException e) {
 			System.out.println("[DBManerger getComment] Exception :"
 					+ e.toString());
@@ -875,7 +892,7 @@ public class DBManerger {
 		} finally {
 			closeDatabaseConnection();
 		}
-		return storeJsonArray.toString();
+		return jsonArray;
 	}
 
 	/**
@@ -909,30 +926,18 @@ public class DBManerger {
 	/**
 	 * get pack by its id
 	 */
-	public String getPack(String packId) {
-		JSONArray storeJsonArray = new JSONArray();
+	public JSONObject getPack(String packId) {
+		JSONObject obj = new JSONObject();
 
 		try {
-			selectSQL = "SELECT `id`, `name`, `description`, `create_time`, `tags`, `is_public`, `creator_user_id` FROM `easylearn`.`pack`"
-					+ "WHERE `id`=?";
+			selectSQL = "SELECT `id`, `name`, `description`, `create_time`, `tags`, `is_public`, `creator_user_id`"
+					+ " FROM `easylearn`.`pack` "
+					+ " WHERE `pack`.`id`=? ";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, packId);
 			rs = pStat.executeQuery();
 
-			while (rs.next()) {
-				// create json object
-				JSONObject obj = new JSONObject();
-
-				obj.put("id", rs.getString("id"));
-				obj.put("name", rs.getString("name"));
-				obj.put("description", rs.getString("description"));
-				obj.put("create_time", rs.getString("create_time"));
-				obj.put("tags", rs.getString("tags"));
-				obj.put("is_public", rs.getBoolean("is_public"));
-				obj.put("creator_user_id", rs.getString("creator_user_id"));
-
-				storeJsonArray.put(obj);
-			}
+			obj = ResultSetConverter.convert(rs).getJSONObject(0);
 		} catch (SQLException e) {
 			System.out.println("[DBManerger getPack] Exception :"
 					+ e.toString());
@@ -942,32 +947,49 @@ public class DBManerger {
 		} finally {
 			closeDatabaseConnection();
 		}
-		return storeJsonArray.toString();
+		return obj;
 	}
-
-	public String getBookmark(String user_id) {
-		JSONArray storeJsonArray = new JSONArray();
+	
+	public JSONArray getPacksVersion(String packId, String userId) {
+		JSONArray jsonArray = new JSONArray();
 
 		try {
-			selectSQL = "SELECT `id`, `name`, `position`, `user_id`, `version_id`, `version_pack_id` FROM `easylearn`.`bookmark`"
-					+ "WHERE `user_id`=?";
+			selectSQL = "SELECT `id`, `content`, `create_time`, `is_public`, `creator_user_id` "
+					+ "FROM `easylearn`.`version` INNER JOIN `easylearn`.`user_has_version` ON version.id = user_has_version.version_id "
+					+ "WHERE `user_has_version`.`version_pack_id` = ? AND `user_has_version`.`user_id` = ?";
 			pStat = dbConnection.prepareStatement(selectSQL);
-			pStat.setString(1, user_id);
+			pStat.setString(1, packId);
+			pStat.setString(2, userId);
 			rs = pStat.executeQuery();
 
-			while (rs.next()) {
-				// create json object
-				JSONObject obj = new JSONObject();
+			jsonArray = ResultSetConverter.convert(rs);
+		} catch (SQLException e) {
+			System.out.println("[DBManerger getPacksVersion] Exception :"
+					+ e.toString());
+		} catch (JSONException e) {
+			System.out.print("[DBManerger getPacksVersion] Exception :");
+			e.printStackTrace();
+		} finally {
+			closeDatabaseConnection();
+		}
+		return jsonArray;
+	}
+	
 
-				obj.put("id", rs.getString("id"));
-				obj.put("name", rs.getString("name"));
-				obj.put("position", rs.getInt("position"));
-				obj.put("user_id", rs.getString("user_id"));
-				obj.put("version_id", rs.getString("version_id"));
-				obj.put("version_pack_id", rs.getString("version_pack_id"));
+	public JSONArray getBookmark(String user_id, String versionid) {
+		JSONArray jsonArray = new JSONArray();
 
-				storeJsonArray.put(obj);
-			}
+		try {
+			selectSQL = "SELECT `id`, `name`, `position`"
+					+ "FROM `easylearn`.`bookmark` "
+					+ "WHERE `user_id`=? AND `version_id`=?";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			pStat.setString(1, user_id);
+			pStat.setString(2, versionid);
+			rs = pStat.executeQuery();
+
+			jsonArray = ResultSetConverter.convert(rs);
+			
 		} catch (SQLException e) {
 			System.out.println("[DBManerger getBookmark] Exception :"
 					+ e.toString());
@@ -977,7 +999,7 @@ public class DBManerger {
 		} finally {
 			closeDatabaseConnection();
 		}
-		return storeJsonArray.toString();
+		return jsonArray;
 	}
 	
 	public String addBookmark(String id,String name,int position,String user_id,String version_id,String version_pack_id) {

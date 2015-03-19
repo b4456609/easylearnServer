@@ -52,7 +52,7 @@ public class DBManergerTest {
 		System.out.println(db.getSetting(userId));
 		System.out.println(db.getFolder(userId));
 		System.out.println(db.getFolderHasPack(userId));
-		System.out.println(db.getNote(noteId));
+		//System.out.println(db.getNote(noteId));
 		System.out.println(db.getPack(packId));
 		System.out.println(db.getVersion(versionId));
 		System.out.println(db.getVersionHasNote(versionId));
