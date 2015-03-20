@@ -588,13 +588,13 @@ public class DBManerger {
 	/**
      * 
      */
-	public String deleteFolderHasPack(String folder_id, String pack_id) {
+	public String deleteFolderHasPack(String folder_id, String user_id) {
 		try {
 			String DELETE_SQL = "DELETE FROM `folder_has_pack` "
-					+ "WHERE `folder_id`= ? and `pack_id`=?";
+					+ "WHERE `folder_id`= ? and `user_id`=?";
 			pStat = dbConnection.prepareStatement(DELETE_SQL);
 			pStat.setString(1, folder_id);
-			pStat.setString(2, pack_id);
+			pStat.setString(2, user_id);
 			pStat.executeUpdate();
 			return ("[DBManerger deleteFolderHasPack] Success");
 		} catch (SQLException e) {
