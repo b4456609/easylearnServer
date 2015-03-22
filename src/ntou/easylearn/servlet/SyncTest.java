@@ -13,13 +13,14 @@ public class SyncTest {
 		SyncManerger sm = new SyncManerger();
 		JSONObject syncData = sm.test();
 
-		Iterator packIter = syncData.keys();
-
-		// add and update folderHasPack in db
-		while (packIter.hasNext()) {
-			System.out.println(packIter.next());
-
-		}
+		System.out.println(syncData);
+//		Iterator packIter = syncData.keys();
+//
+//		// add and update folderHasPack in db
+//		while (packIter.hasNext()) {
+//			System.out.println(packIter.next());
+//
+//		}
 	}
 
 }

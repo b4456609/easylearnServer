@@ -181,19 +181,39 @@ public class DBManerger {
 		}
 		return "[DBManerger getSetting] Fail";
 	}
+	
+	public String syncTime(String last_sync_time, String user_id) {
+		try {
+			String updateSQL = "UPDATE setting "
+					+ "SET last_sync_time = ?"
+					+ "WHERE user_id =?";
+			pStat = dbConnection.prepareStatement(updateSQL);
+			pStat.setString(1, last_sync_time);
+			pStat.setString(2, user_id);
+			pStat.executeUpdate();
+			return ("[DBManerger syncTime] Success");
+		}
+		/*--------------------- failed to inserting data to database  ---------------------*/
+		catch (SQLException e) {
+			System.out.println("Register Exception :" + e.toString());
+		} finally {
+			closeDatabaseConnection();
+		}
+		return "[DBManerger syncTime] Fail";
+	}
 
 	public String updatePack(String id, String name, String description,
-			String createTime, String tags, boolean isPublic) {
+			String createTime, String tags, boolean is_public) {
 		try {
 			String updateSQL = "UPDATE pack "
-					+ "SET name = ?, description = ?, createTime = ?, tags=?, isPublic=?"
+					+ "SET name = ?, description = ?, createTime = ?, tags=?, is_public=?"
 					+ "WHERE id =?";
 			pStat = dbConnection.prepareStatement(updateSQL);
 			pStat.setString(1, name);
 			pStat.setString(2, description);
 			pStat.setString(3, createTime);
 			pStat.setString(4, tags);
-			pStat.setBoolean(5, isPublic);
+			pStat.setBoolean(5, is_public);
 			pStat.setString(6, id);
 			pStat.executeUpdate();
 			return ("[DBManerger updatePack] Success");
@@ -208,16 +228,16 @@ public class DBManerger {
 	}
 
 	public String updateVersion(String id, String content, String create_time,
-			String pack_id, boolean isPublic) {
+			String pack_id, boolean is_public) {
 		try {
 			String updateSQL = "UPDATE version "
-					+ "SET content = ?, createTime = ?, pack_id=?, isPublic=?"
+					+ "SET content = ?, createTime = ?, pack_id=?, is_public=?"
 					+ "WHERE id =?";
 			pStat = dbConnection.prepareStatement(updateSQL);
 			pStat.setString(1, content);
 			pStat.setString(2, create_time);
 			pStat.setString(3, pack_id);
-			pStat.setBoolean(4, isPublic);
+			pStat.setBoolean(4, is_public);
 			pStat.setString(5, id);
 			pStat.executeUpdate();
 			return ("[DBManerger updateVersion] Success");
@@ -330,7 +350,7 @@ public class DBManerger {
 		JSONArray jsonArray = new JSONArray();
 
 		try {
-			selectSQL = "SELECT `folder`.`id`,`folder`.`name`,`folder`.`user_id`"
+			selectSQL = "SELECT `folder`.`id`,`folder`.`name`"
 					+ "FROM `easylearn`.`folder`"
 					+ "WHERE `user_id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
@@ -438,24 +458,23 @@ public class DBManerger {
 		return storeJsonArray.toString();
 	}
 
-	public String deleteUserHasVersion(String UserId, String version_id) {
+	public String deleteUserHasVersion(String userId) {
 
 		try {
 			selectSQL = "DELETE FROM `user_has_version` "
-					+ "WHERE `user_id`= ? and `version_id`=?";
+					+ "WHERE `user_id`= ?";
 			pStat = dbConnection.prepareStatement(selectSQL);
-			pStat.setString(1, UserId);
-			pStat.setString(2, version_id);
-			rs = pStat.executeQuery();
-			return ("[DBManerger deleteFolderHasPack] Success");
+			pStat.setString(1, userId);
+			pStat.executeUpdate();
+			return ("[DBManerger deleteUserHasVersion] Success");
 
 		} catch (SQLException e) {
-			System.out.println("[DBManerger getUserHasVersion] Exception :"
+			System.out.println("[DBManerger deleteUserHasVersion] Exception :"
 					+ e.toString());
 		} finally {
 			closeDatabaseConnection();
 		}
-		return ("[DBManerger deleteFolderHasPack] Fail");
+		return ("[DBManerger deleteUserHasVersion] Fail");
 	}
 
 	public String getFolderHasPack(String user_id) {
@@ -608,8 +627,8 @@ public class DBManerger {
 	/**
      * 
      */
-	public String getVersion(String versionId) {
-		JSONArray storeJsonArray = new JSONArray();
+	public JSONObject getVersion(String versionId) {
+		JSONObject obj = new JSONObject();
 
 		try {
 			selectSQL = "SELECT `id`, `content`, `create_time`, `pack_id`, `is_public`, `creator_user_id` FROM `easylearn`.`version`"
@@ -618,20 +637,8 @@ public class DBManerger {
 			pStat.setString(1, versionId);
 			rs = pStat.executeQuery();
 
-			while (rs.next()) {
-				// create json object
-				JSONObject obj = new JSONObject();
 
-				obj.put("id", rs.getString("id"));
-				obj.put("content", rs.getString("content"));
-				obj.put("create_time", rs.getString("create_time"));
-				obj.put("pack_id", rs.getString("pack_id"));
-				obj.put("is_public", rs.getBoolean("is_public"));
-				obj.put("creator_user_id", rs.getString("creator_user_id"));
-
-				storeJsonArray.put(obj);
-
-			}
+			obj = ResultSetConverter.convert(rs).getJSONObject(0);
 		} catch (SQLException e) {
 			System.out.println("[DBManerger getVersion] Exception :"
 					+ e.toString());
@@ -641,14 +648,14 @@ public class DBManerger {
 		} finally {
 			closeDatabaseConnection();
 		}
-		return storeJsonArray.toString();
+		return obj;
 	}
 
 	/**
      * 
      */
 	public String addVersion(String id, String content, String create_time,
-			String pack_id, boolean isPublic, String creator_user_id) {
+			String pack_id, boolean is_public, String creator_user_id) {
 		try {
 			String insertdbSQL = "INSERT INTO `easylearn`.`version` (`id`, `content`, `create_time`, `pack_id`, `is_public`, `creator_user_id`) VALUES (?, ?, ?, ?, ?, ?)";
 			pStat = dbConnection.prepareStatement(insertdbSQL);
@@ -656,7 +663,7 @@ public class DBManerger {
 			pStat.setString(2, content);
 			pStat.setString(3, create_time);
 			pStat.setString(4, pack_id);
-			pStat.setBoolean(5, isPublic);
+			pStat.setBoolean(5, is_public);
 			pStat.setString(6, creator_user_id);
 			pStat.executeUpdate();
 
@@ -718,6 +725,30 @@ public class DBManerger {
 		}
 		return jsonArray;
 	}
+	
+	public JSONObject getFile(String version_id, String filename) {
+		JSONObject obj = new JSONObject();
+
+		try {
+			selectSQL = "SELECT `filename` FROM `easylearn`.`file` WHERE `version_id`=? and `filename`=?";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			pStat.setString(1, version_id);
+			pStat.setString(2, filename);
+			rs = pStat.executeQuery();
+
+			obj = ResultSetConverter.convert(rs).getJSONObject(0);
+			
+		} catch (SQLException e) {
+			System.out.println("[DBManerger getFile] Exception :"
+					+ e.toString());
+		} catch (JSONException e) {
+			System.out.print("[DBManerger getFile] Exception :");
+			e.printStackTrace();
+		} finally {
+			closeDatabaseConnection();
+		}
+		return obj;
+	}
 
 	/**
 	 * getNote by id
@@ -733,6 +764,32 @@ public class DBManerger {
 					+ "WHERE `version_id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, versionId);
+			rs = pStat.executeQuery();
+
+			jsonArray = ResultSetConverter.convert(rs);
+		} catch (SQLException e) {
+			System.out.println("[DBManerger getNote] Exception :"
+					+ e.toString());
+		} catch (JSONException e) {
+			System.out.print("[DBManerger getNote] Exception :");
+			e.printStackTrace();
+		} finally {
+			closeDatabaseConnection();
+		}
+		return jsonArray;
+	}
+	
+	public JSONArray getNote(String noteId) {
+		JSONArray jsonArray = new JSONArray();
+
+		try {
+			selectSQL = "SELECT`note`.`id`, `color`, `content`, `note`.`create_time`, `user_id` "
+					+ "FROM `easylearn`.`note`"
+					+ "INNER JOIN `easylearn`.`version_has_note` ON `note`.`id`=`version_has_note`.`note_id`"
+					+ "INNER JOIN `easylearn`.`user` ON `note`.`user_id`=`user`.`id`"
+					+ "WHERE `id`=?";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			pStat.setString(1, noteId);
 			rs = pStat.executeQuery();
 
 			jsonArray = ResultSetConverter.convert(rs);
@@ -854,7 +911,7 @@ public class DBManerger {
 					+ "WHERE `id`= ?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, id);
-			rs = pStat.executeQuery();
+			pStat.executeUpdate();
 			return ("[DBManerger deleteVersionHasNote] Success");
 
 		} catch (SQLException e) {
@@ -865,11 +922,30 @@ public class DBManerger {
 		}
 		return ("[DBManerger deleteVersionHasNote] Fail");
 	}
+	
+	public String deleteFile(String name, String versionId) {
+		try {
+			selectSQL = "DELETE FROM `file` "
+					+ "WHERE `filename`= ? and `verion_id`=?";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			pStat.setString(1, name);
+			pStat.setString(2, versionId);
+			pStat.executeUpdate();
+			return ("[DBManerger deleteFile] Success");
+
+		} catch (SQLException e) {
+			System.out.println("[DBManerger deleteFile] Exception :"
+					+ e.toString());
+		} finally {
+			closeDatabaseConnection();
+		}
+		return ("[DBManerger deleteFile] Fail");
+	}
 
 	/**
 	 * get comment with note_id
 	 */
-	public JSONArray getComment(String note_id) {
+	public JSONArray getComments(String note_id) {
 
 		JSONArray jsonArray = new JSONArray();
 
@@ -894,12 +970,38 @@ public class DBManerger {
 		}
 		return jsonArray;
 	}
+	
+	public JSONObject getComment(String comment_id) {
+
+		JSONObject obj = new JSONObject();
+
+		try {
+			selectSQL = "SELECT `id`,`content`,`create_time`,`note_id`,`name`"
+					+ "FROM `easylearn`.`comment_with_name` "
+					+ "WHERE `id`=?";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			pStat.setString(1, comment_id);
+			rs = pStat.executeQuery();
+
+			obj = ResultSetConverter.convert(rs).getJSONObject(0);
+			
+		} catch (SQLException e) {
+			System.out.println("[DBManerger getComment] Exception :"
+					+ e.toString());
+		} catch (JSONException e) {
+			System.out.print("[DBManerger getComment] Exception :");
+			e.printStackTrace();
+		} finally {
+			closeDatabaseConnection();
+		}
+		return obj;
+	}
 
 	/**
 	 * add pack tags is json array data
 	 */
 	public String addPack(String id, String name, String description,
-			String createTime, String tags, boolean isPublic,
+			String createTime, String tags, boolean is_public,
 			String creator_user_id) {
 		try {
 			String insertdbSQL = "INSERT INTO `easylearn`.`pack` (`id`, `name`, `description`, `create_time`, `tags`, `is_public`, `creator_user_id`) VALUES (?,?, ?, ?, ?, ?, ?)";
@@ -909,7 +1011,7 @@ public class DBManerger {
 			pStat.setString(3, description);
 			pStat.setString(4, createTime);
 			pStat.setString(5, tags);
-			pStat.setBoolean(6, isPublic);
+			pStat.setBoolean(6, is_public);
 			pStat.setString(7, creator_user_id);
 			pStat.executeUpdate();
 
@@ -1024,13 +1126,13 @@ public class DBManerger {
 		return "[DBManerger addBookmark] success";
 	}
 
-	public String deleteBookmark(String id) {
+	public String deleteBookmark(String userId) {
 		try {
 			selectSQL = "DELETE FROM `bookmark` "
-					+ "WHERE `id`= ?";
+					+ "WHERE `user_id`= ?";
 			pStat = dbConnection.prepareStatement(selectSQL);
-			pStat.setString(1, id);
-			rs = pStat.executeQuery();
+			pStat.setString(1, userId);
+			pStat.executeUpdate();
 			return ("[DBManerger deleteBookmark] Success");
 
 		} catch (SQLException e) {

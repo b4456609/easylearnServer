@@ -32,6 +32,8 @@ public class SyncManerger extends HttpServlet {
 	private DBManerger db;
 	private Timestamp syncTimeStamp;
 	private JSONObject responseJson;
+	private JSONObject syncInfo = new JSONObject();
+	private JSONArray uploadFile = new JSONArray();
 
 	/**
 	 * @see HttpServlet#HttpServlet()
@@ -47,7 +49,8 @@ public class SyncManerger extends HttpServlet {
 		// initial set success sync
 		responseJson = new JSONObject();
 		try {
-			responseJson.put("sync", "success");
+			syncInfo.put("status", "success");
+			syncInfo.put("timestamp", syncTimeStamp.toString());
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -65,11 +68,12 @@ public class SyncManerger extends HttpServlet {
 
 		try {
 			// get json data from request
-			String syncJsonData = request.getParameter("syncData");
+			String syncJsonData = request.getParameter("sync_data");
 
 			// extract sync data to user and setting
 			syncData = new JSONObject(syncJsonData);
 			userData = syncData.getJSONObject("user");
+			userId = userData.getString("id");
 			folderData = syncData.getJSONArray("folder");
 
 			// decide server or client has newer data by last_sync_time
@@ -77,12 +81,18 @@ public class SyncManerger extends HttpServlet {
 				syncBaseOnClient();
 			else
 				syncBaseOnServer();
-
-			response.setContentType("application/json");
-			response.getWriter().write(responseJson.toString());
+			
+			syncInfo.put("upload_file", uploadFile);
+			responseJson.put("sync", syncInfo);
+			
+			//update sync time to db
+			db.syncTime(syncTimeStamp.toString(), userId);
 		} catch (JSONException e) {
 			exceptionHandler();
 			e.printStackTrace();
+		}finally{
+			response.setContentType("application/json");
+			response.getWriter().write(responseJson.toString());
 		}
 	}
 
@@ -91,6 +101,7 @@ public class SyncManerger extends HttpServlet {
 
 		// get user's last sync time from server
 		JSONObject dbSetting = db.getSetting(userId);
+
 		String dbSyncTime = dbSetting.getString("last_sync_time");
 		Timestamp dbSyncTimeStamp = Timestamp.valueOf(dbSyncTime);
 
@@ -107,9 +118,10 @@ public class SyncManerger extends HttpServlet {
 	}
 
 	private void exceptionHandler() {
-		responseJson.remove("sync");
+		syncInfo.remove("status");
 		try {
-			responseJson.put("sync", "fail");
+			syncInfo.put("status", "fail");
+			responseJson.put("sync", syncInfo);
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -162,16 +174,18 @@ public class SyncManerger extends HttpServlet {
 				for (int k = 0; k < notes.length(); k++) {
 					// get comment jsonArray by noteid in comment
 					String noteId = notes.getJSONObject(k).getString("id");
-					notes.getJSONObject(k)
-							.put("comment", db.getComment(noteId));
+					notes.getJSONObject(k).put("comment",
+							db.getComments(noteId));
 				}
 
-				// put notes in packId
+				// put notes in version
 				version.getJSONObject(j).put("note", notes);
 
-				// put version in packId
+				// put version in pack
 				pack.put("version", version);
 			}
+			// remove pack id
+			pack.remove("id");
 			// put pack in responseJson
 			responseJson.put(packId, pack);
 		}
@@ -183,7 +197,12 @@ public class SyncManerger extends HttpServlet {
 		JSONObject setting = userData.getJSONObject("setting");
 		db.updateSetting(setting.getBoolean("wifi_sync"),
 				setting.getBoolean("mobile_network_sync"),
-				syncTimeStamp.toString(), setting.getString("userId"));
+				syncTimeStamp.toString(),userId);
+
+		// remove all userHasVersion convenient for sync
+		db.deleteUserHasVersion(userId);
+		// remove all userHasVersion convenient for sync
+		db.deleteBookmark(userId);
 
 		// Update folder
 		folderSyncBaseOnClient();
@@ -191,41 +210,188 @@ public class SyncManerger extends HttpServlet {
 		// Update pack
 		packSyncBaseOnClient();
 
-		// * Version
-		// * Note
-		//
-		// * Comment
-		//
-		// * Bookmark
-		// * File
+	}
+
+	private void packSyncBaseOnClient() throws JSONException {
+		Iterator packIter = syncData.keys();
+
+		// add and update folderHasPack in db
+		while (packIter.hasNext()) {
+
+			// skip other non pack data
+			if (packIter.next().toString().equals("user")
+					|| packIter.next().toString().equals("folder"))
+				continue;
+
+			// get json object
+			JSONObject pack = userData.getJSONObject(packIter.toString());
+
+			// get pack id
+			String packId = pack.getString("id");
+
+			// update pack or add pack
+			// check is already in db?
+			if (db.getPack(packId).length() == 0) {
+				// add pack
+				db.addPack(pack.getString("id"), pack.getString("name"),
+						pack.getString("description"),
+						pack.getString("createTime"), pack.getString("tags"),
+						pack.getBoolean("is_public"),
+						pack.getString("creator_user_id"));
+			}
+			// yes update it
+			else {
+				db.updatePack(pack.getString("id"), pack.getString("name"),
+						pack.getString("description"),
+						pack.getString("createTime"), pack.getString("tags"),
+						pack.getBoolean("is_public"));
+			}
+
+			// version
+			// get pack's version
+			JSONArray versionArray = pack.getJSONArray("version");
+			versionSyncBaseOnclient(packId, versionArray);
+		}
+	}
+
+	private void versionSyncBaseOnclient(String packId, JSONArray versionArray)
+			throws JSONException {
+		for (int i = 0; i < versionArray.length(); i++) {
+			JSONObject version = versionArray.getJSONObject(i);
+
+			// get version id
+			String versionId = version.getString("id");
+
+			// update version or add version
+			// check is already in db?
+			if (db.getVersion(versionId).length() == 0) {
+				// add pack
+				db.addVersion(version.getString("id"),
+						version.getString("content"),
+						version.getString("create_time"),
+						version.getString("pack_id"),
+						version.getBoolean("is_public"),
+						version.getString("creator_user_id"));
+			} else {
+				// yes update it
+				db.updateVersion(version.getString("id"),
+						version.getString("content"),
+						version.getString("create_time"),
+						version.getString("pack_id"),
+						version.getBoolean("is_public"));
+			}
+
+			// add user has version
+			db.addUserHasVersion(userId, versionId, packId);
+
+			// bookmark
+			// get bookmark array
+			JSONArray bookmarkArray = version.getJSONArray("bookmark");
+			// add all to db
+			for (int j = 0; j < bookmarkArray.length(); j++) {
+				JSONObject bookmark = bookmarkArray.getJSONObject(j);
+				db.addBookmark(bookmark.getString("id"),
+						bookmark.getString("name"),
+						bookmark.getInt("position"), userId, versionId, packId);
+			}
+
+			// note
+			// get version's note array
+			JSONArray noteArray = version.getJSONArray("note");
+			noteSyncBaseOnclient(versionId, packId, noteArray);
+
+			// file
+			// get file array
+			JSONArray fileArray = version.getJSONArray("file");
+			fileSyncBaseOnclient(versionId, packId, fileArray);
+
+		}
+	}
+
+	private void fileSyncBaseOnclient(String versionId, String packId,
+			JSONArray fileArray) throws JSONException {
+		// get db file array
+		JSONArray dbFileArray = db.getFile(versionId);
+
+		// delete file
+		for (int j = 0; j < dbFileArray.length(); j++) {
+			
+			JSONObject dbfile = dbFileArray.getJSONObject(j);
+			// get file name
+			String dbname = dbfile.getString("filename");
+			
+			int i;
+			for (i = 0; i < fileArray.length(); i++) {
+				JSONObject file = fileArray.getJSONObject(i);
+				// get file name
+				String name = file.getString("filename");
+				
+				if(dbname.equals(name))
+					break;
+			}
+			
+			if(i == fileArray.length())
+				db.deleteFile(dbname, versionId);
+		}
+		
+		// add file
+		for(int i=0; i < fileArray.length(); i++){
+			JSONObject file = fileArray.getJSONObject(i);
+			// get file name
+			String name = file.getString("filename");
+			
+			if(db.getFile(versionId, name).length() == 0){
+				db.addFile(name, versionId, packId);
+				JSONObject newFile = new JSONObject();
+				newFile.put("name", name);
+				newFile.put("version_id", versionId);
+				newFile.put("version_pack_id", packId);
+				uploadFile.put(newFile);
+			}
+		}
+	}
+
+	private void noteSyncBaseOnclient(String versionId, String packId,
+			JSONArray noteArray) throws JSONException {
+		for (int i = 0; i < noteArray.length(); i++) {
+
+			JSONObject note = noteArray.getJSONObject(i);
+
+			// get note id
+			String noteId = note.getString("id");
+
+			// update note or add note
+			// check is already in db?
+			if (db.getNote(noteId).length() == 0) {
+				// add note
+				db.addNote(note.getString("id"), note.getInt("color"),
+						note.getString("content"),
+						note.getString("create_time"), userId);
+				// add version has note table
+				db.addVersionHasNote(versionId, packId, noteId,
+						note.getInt("position"), note.getInt("position_length"));
+			}
+
+			// get comment
+			JSONArray commentArray = note.getJSONArray("comment");
+			commentSyncBaseOnclient(commentArray, noteId);
+
+		}
 
 	}
 
-	private void packSyncBaseOnClient() {
-		Iterator packIter = syncData.keys();
-		
-		// add and update folderHasPack in db
-		while (packIter.hasNext()) {
-			if(packIter.next().toString().equals("user") || packIter.next().toString().equals("folder"))
-				continue;
+	private void commentSyncBaseOnclient(JSONArray commentArray, String noteId)
+			throws JSONException {
+		for (int i = 0; i < commentArray.length(); i++) {
+			JSONObject comment = commentArray.getJSONObject(i);
 
-//			// get i th object
-//			JSONObject clientPackObject = folderHasPackData.getJSONObject(i);
-//			PackModel clientPackModel = new PackModel(clientJsonObject);
-//
-//			// get dbJsonObject
-//			JSONArray data = new JSONArray(db.getPack(clientPackModel.getId()));
-//
-//			// not found pack data in db, add it in db
-//			if (data.length() == 0) {
-//				clientPackModel.addToDB();
-//			} else {
-//				JSONObject dbJsonObject = data.getJSONObject(0);
-//				PackModel dbPackModel = new PackModel(dbJsonObject);
-//				if (!clientPackModel.isEqual(dbPackModel))
-//					clientPackModel.updateToDB();
-//			}
-
+			// get comment id
+			String commentId = comment.getString("id");
+			if (db.getComment(commentId).length() == 0) {
+				// add comment
+				db.addComment(commentId, comment.getString("content"),
+						comment.getString("create_time"), noteId, userId);
+			}
 		}
 	}
 

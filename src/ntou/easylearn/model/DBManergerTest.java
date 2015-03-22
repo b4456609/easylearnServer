@@ -56,7 +56,7 @@ public class DBManergerTest {
 		System.out.println(db.getPack(packId));
 		System.out.println(db.getVersion(versionId));
 		System.out.println(db.getVersionHasNote(versionId));
-		System.out.println(db.getComment(commentId));
+		System.out.println(db.getComments(commentId));
 		System.out.println(db.getFile(versionId));
 		
 
