@@ -1002,9 +1002,9 @@ public class DBManerger {
 	 */
 	public String addPack(String id, String name, String description,
 			String createTime, String tags, boolean is_public,
-			String creator_user_id) {
+			String creator_user_id,String cover_filename) {
 		try {
-			String insertdbSQL = "INSERT INTO `easylearn`.`pack` (`id`, `name`, `description`, `create_time`, `tags`, `is_public`, `creator_user_id`) VALUES (?,?, ?, ?, ?, ?, ?)";
+			String insertdbSQL = "INSERT INTO `easylearn`.`pack` (`id`, `name`, `description`, `create_time`, `tags`, `is_public`, `creator_user_id`, `cover_filename`) VALUES (?, ?,?, ?, ?, ?, ?, ?)";
 			pStat = dbConnection.prepareStatement(insertdbSQL);
 			pStat.setString(1, id);
 			pStat.setString(2, name);
@@ -1013,6 +1013,7 @@ public class DBManerger {
 			pStat.setString(5, tags);
 			pStat.setBoolean(6, is_public);
 			pStat.setString(7, creator_user_id);
+			pStat.setString(8, cover_filename);
 			pStat.executeUpdate();
 
 		} catch (SQLException e) {
@@ -1032,7 +1033,7 @@ public class DBManerger {
 		JSONObject obj = new JSONObject();
 
 		try {
-			selectSQL = "SELECT `id`, `name`, `description`, `create_time`, `tags`, `is_public`, `creator_user_id`"
+			selectSQL = "SELECT `id`, `name`, `description`, `create_time`, `tags`, `is_public`, `creator_user_id`, `cover_filename`"
 					+ " FROM `easylearn`.`pack` "
 					+ " WHERE `pack`.`id`=? ";
 			pStat = dbConnection.prepareStatement(selectSQL);

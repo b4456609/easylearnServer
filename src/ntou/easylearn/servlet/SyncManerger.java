@@ -237,7 +237,12 @@ public class SyncManerger extends HttpServlet {
 						pack.getString("description"),
 						pack.getString("createTime"), pack.getString("tags"),
 						pack.getBoolean("is_public"),
-						pack.getString("creator_user_id"));
+						pack.getString("creator_user_id"), pack.getString("cover_filename"));
+				JSONObject newFile = new JSONObject();
+				newFile.put("name", pack.getString("cover_filename"));
+				newFile.put("version_id", "");
+				newFile.put("version_pack_id", packId);
+				uploadFile.put(newFile);
 			}
 			// yes update it
 			else {
@@ -245,6 +250,7 @@ public class SyncManerger extends HttpServlet {
 						pack.getString("description"),
 						pack.getString("createTime"), pack.getString("tags"),
 						pack.getBoolean("is_public"));
+				
 			}
 
 			// version
