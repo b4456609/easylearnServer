@@ -971,6 +971,33 @@ public class DBManerger {
 		return jsonArray;
 	}
 	
+	public JSONArray getCommentsAfterTime(String note_id,String time) {
+
+		JSONArray jsonArray = new JSONArray();
+
+		try {
+			selectSQL = "SELECT `id`,`content`,`create_time`,`note_id`,`name`"
+					+ "FROM `easylearn`.`comment_with_name` "
+					+ "WHERE `note_id`=? AND create_time > ?";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			pStat.setString(1, note_id);
+			pStat.setString(2, time);
+			rs = pStat.executeQuery();
+
+			jsonArray = ResultSetConverter.convert(rs);
+			
+		} catch (SQLException e) {
+			System.out.println("[DBManerger getComment] Exception :"
+					+ e.toString());
+		} catch (JSONException e) {
+			System.out.print("[DBManerger getComment] Exception :");
+			e.printStackTrace();
+		} finally {
+			closeDatabaseConnection();
+		}
+		return jsonArray;
+	}
+	
 	public JSONObject getComment(String comment_id) {
 
 		JSONObject obj = new JSONObject();

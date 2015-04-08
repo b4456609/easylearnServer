@@ -65,10 +65,12 @@ public class SyncManerger extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
-
+		System.out.println("do post");
 		try {
 			// get json data from request
 			String syncJsonData = request.getParameter("sync_data");
+			
+			System.out.println(syncJsonData);
 
 			// extract sync data to user and setting
 			syncData = new JSONObject(syncJsonData);
@@ -88,8 +90,8 @@ public class SyncManerger extends HttpServlet {
 			//update sync time to db
 			db.syncTime(syncTimeStamp.toString(), userId);
 		} catch (JSONException e) {
-			exceptionHandler();
 			e.printStackTrace();
+			exceptionHandler();			
 		}finally{
 			response.setContentType("application/json");
 			response.getWriter().write(responseJson.toString());
@@ -118,6 +120,7 @@ public class SyncManerger extends HttpServlet {
 	}
 
 	private void exceptionHandler() {
+		System.out.println("fail");
 		syncInfo.remove("status");
 		try {
 			syncInfo.put("status", "fail");
