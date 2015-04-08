@@ -67,7 +67,7 @@ public class CommentManerger extends HttpServlet {
 			JSONObject newCommentObj = new JSONObject(newComment);
 			db.addComment(newCommentObj.getString("id"),
 					newCommentObj.getString("content"),
-					newCommentObj.getString("create_time"), noteId,
+					newCommentObj.getLong("create_time"), noteId,
 					newCommentObj.getString("user_id"));
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block

@@ -69,7 +69,7 @@ public class SyncManerger extends HttpServlet {
 		try {
 			// get json data from request
 			String syncJsonData = request.getParameter("sync_data");
-			
+
 			System.out.println(syncJsonData);
 
 			// extract sync data to user and setting
@@ -83,16 +83,16 @@ public class SyncManerger extends HttpServlet {
 				syncBaseOnClient();
 			else
 				syncBaseOnServer();
-			
+
 			syncInfo.put("upload_file", uploadFile);
 			responseJson.put("sync", syncInfo);
-			
-			//update sync time to db
+
+			// update sync time to db
 			db.syncTime(syncTimeStamp.toString(), userId);
 		} catch (JSONException e) {
 			e.printStackTrace();
-			exceptionHandler();			
-		}finally{
+			exceptionHandler();
+		} finally {
 			response.setContentType("application/json");
 			response.getWriter().write(responseJson.toString());
 		}
@@ -103,17 +103,20 @@ public class SyncManerger extends HttpServlet {
 
 		// get user's last sync time from server
 		JSONObject dbSetting = db.getSetting(userId);
-
-		String dbSyncTime = dbSetting.getString("last_sync_time");
-		Timestamp dbSyncTimeStamp = Timestamp.valueOf(dbSyncTime);
+		//this user not exit in db
+		if(dbSetting.length() == 0)
+			return true;
+		
+		Timestamp time = Timestamp.valueOf(dbSetting.getString("last_sync_time"));
+		long dbSyncTime = time.getTime();
 
 		// get user's last sync time from client
-		Timestamp clientSyncTime = Timestamp.valueOf(userData.getJSONObject(
-				"setting").getString("last_sync_time"));
+		long clientSyncTime = Timestamp.valueOf(userData.getJSONObject(
+				"setting").getString("last_sync_time")).getTime();
 
 		// compare who's data are newer
 		// true mean clientSyncTime is after dbSyncTimeStamp
-		if (dbSyncTimeStamp.compareTo(clientSyncTime) < 0)
+		if (dbSyncTime < clientSyncTime)
 			return true;
 		else
 			return false;
@@ -132,6 +135,7 @@ public class SyncManerger extends HttpServlet {
 	}
 
 	private void syncBaseOnServer() throws JSONException {
+		System.out.println("syncBaseOnServer");
 		// get setting by userId
 		// add setting in result jsonArray
 		responseJson.put("setting", db.getSetting(userId));
@@ -196,20 +200,26 @@ public class SyncManerger extends HttpServlet {
 	}
 
 	private void syncBaseOnClient() throws JSONException {
+		System.out.println("syncBaseOnClient");
 		// update setting
 		JSONObject setting = userData.getJSONObject("setting");
 		db.updateSetting(setting.getBoolean("wifi_sync"),
 				setting.getBoolean("mobile_network_sync"),
-				syncTimeStamp.toString(),userId);
+				syncTimeStamp.toString(), userId);
 
+		System.out.println("remove all setting");
 		// remove all userHasVersion convenient for sync
 		db.deleteUserHasVersion(userId);
+
 		// remove all userHasVersion convenient for sync
 		db.deleteBookmark(userId);
+
+		System.out.println("folderSyncBaseOnClient");
 
 		// Update folder
 		folderSyncBaseOnClient();
 
+		System.out.println("packSyncBaseOnClient");
 		// Update pack
 		packSyncBaseOnClient();
 
@@ -220,27 +230,25 @@ public class SyncManerger extends HttpServlet {
 
 		// add and update folderHasPack in db
 		while (packIter.hasNext()) {
+			String packId = packIter.next().toString();
 
 			// skip other non pack data
-			if (packIter.next().toString().equals("user")
-					|| packIter.next().toString().equals("folder"))
+			if (packId.equals("user") || packId.equals("folder"))
 				continue;
 
 			// get json object
-			JSONObject pack = userData.getJSONObject(packIter.toString());
-
-			// get pack id
-			String packId = pack.getString("id");
+			JSONObject pack = syncData.getJSONObject(packId);
 
 			// update pack or add pack
 			// check is already in db?
 			if (db.getPack(packId).length() == 0) {
 				// add pack
-				db.addPack(pack.getString("id"), pack.getString("name"),
+				db.addPack(packId, pack.getString("name"),
 						pack.getString("description"),
-						pack.getString("createTime"), pack.getString("tags"),
+						pack.getLong("create_time"), pack.getString("tags"),
 						pack.getBoolean("is_public"),
-						pack.getString("creator_user_id"), pack.getString("cover_filename"));
+						pack.getString("creator_user_id"),
+						pack.getString("cover_filename"));
 				JSONObject newFile = new JSONObject();
 				newFile.put("name", pack.getString("cover_filename"));
 				newFile.put("version_id", "");
@@ -249,11 +257,11 @@ public class SyncManerger extends HttpServlet {
 			}
 			// yes update it
 			else {
-				db.updatePack(pack.getString("id"), pack.getString("name"),
+				db.updatePack(packId, pack.getString("name"),
 						pack.getString("description"),
-						pack.getString("createTime"), pack.getString("tags"),
+						pack.getLong("create_time"), pack.getString("tags"),
 						pack.getBoolean("is_public"));
-				
+
 			}
 
 			// version
@@ -277,16 +285,14 @@ public class SyncManerger extends HttpServlet {
 				// add pack
 				db.addVersion(version.getString("id"),
 						version.getString("content"),
-						version.getString("create_time"),
-						version.getString("pack_id"),
+						version.getLong("create_time"), packId,
 						version.getBoolean("is_public"),
 						version.getString("creator_user_id"));
 			} else {
 				// yes update it
 				db.updateVersion(version.getString("id"),
 						version.getString("content"),
-						version.getString("create_time"),
-						version.getString("pack_id"),
+						version.getLong("create_time"), packId,
 						version.getBoolean("is_public"));
 			}
 
@@ -324,32 +330,32 @@ public class SyncManerger extends HttpServlet {
 
 		// delete file
 		for (int j = 0; j < dbFileArray.length(); j++) {
-			
+
 			JSONObject dbfile = dbFileArray.getJSONObject(j);
 			// get file name
 			String dbname = dbfile.getString("filename");
-			
+
 			int i;
 			for (i = 0; i < fileArray.length(); i++) {
 				JSONObject file = fileArray.getJSONObject(i);
 				// get file name
 				String name = file.getString("filename");
-				
-				if(dbname.equals(name))
+
+				if (dbname.equals(name))
 					break;
 			}
-			
-			if(i == fileArray.length())
+
+			if (i == fileArray.length())
 				db.deleteFile(dbname, versionId);
 		}
-		
+
 		// add file
-		for(int i=0; i < fileArray.length(); i++){
+		for (int i = 0; i < fileArray.length(); i++) {
 			JSONObject file = fileArray.getJSONObject(i);
 			// get file name
 			String name = file.getString("filename");
-			
-			if(db.getFile(versionId, name).length() == 0){
+
+			if (db.getFile(versionId, name).length() == 0) {
 				db.addFile(name, versionId, packId);
 				JSONObject newFile = new JSONObject();
 				newFile.put("name", name);
@@ -373,12 +379,10 @@ public class SyncManerger extends HttpServlet {
 			// check is already in db?
 			if (db.getNote(noteId).length() == 0) {
 				// add note
-				db.addNote(note.getString("id"), note.getInt("color"),
-						note.getString("content"),
-						note.getString("create_time"), userId);
+				db.addNote(note.getString("id"), note.getString("content"),
+						note.getLong("create_time"), userId);
 				// add version has note table
-				db.addVersionHasNote(versionId, packId, noteId,
-						note.getInt("position"), note.getInt("position_length"));
+				db.addVersionHasNote(versionId, packId, noteId);
 			}
 
 			// get comment
@@ -399,21 +403,23 @@ public class SyncManerger extends HttpServlet {
 			if (db.getComment(commentId).length() == 0) {
 				// add comment
 				db.addComment(commentId, comment.getString("content"),
-						comment.getString("create_time"), noteId, userId);
+						comment.getLong("create_time"), noteId, userId);
 			}
 		}
 	}
 
 	private void folderSyncBaseOnClient() throws JSONException {
+
 		// get folder jsonArray by userid
 		JSONArray dbFolder = db.getFolder(userId);
 
+		System.out.println("delete folder");
 		// delete folder in db
 		for (int i = 0; i < dbFolder.length(); i++) {
 			String itemId = dbFolder.getJSONObject(i).getString("id");
 
 			int j = 0;
-			for (; j < folderData.length(); i++) {
+			for (; j < folderData.length(); j++) {
 				if (itemId.equals(folderData.getJSONObject(j).getString("id")))
 					break;
 			}
@@ -422,6 +428,7 @@ public class SyncManerger extends HttpServlet {
 			}
 		}
 
+		System.out.println("update and add  folder");
 		// update and add folder in db
 		for (int i = 0; i < folderData.length(); i++) {
 			// get client folder data
@@ -433,8 +440,8 @@ public class SyncManerger extends HttpServlet {
 			int j = 0;
 			for (; j < dbFolder.length(); j++) {
 				// get db folder data
-				String dbFolderId = dbFolder.getJSONObject(i).getString("id");
-				String dbFoldername = dbFolder.getJSONObject(i).getString(
+				String dbFolderId = dbFolder.getJSONObject(j).getString("id");
+				String dbFoldername = dbFolder.getJSONObject(j).getString(
 						"name");
 
 				// find the same id ,but different name
@@ -468,15 +475,16 @@ public class SyncManerger extends HttpServlet {
 			JSONArray packArray) throws JSONException {
 		// check pack in folder
 
+		System.out.println(dbPackArray);
+
 		// delete folderHasPack in db
 		for (int i = 0; i < dbPackArray.length(); i++) {
-			String dbPackId = dbPackArray.getJSONObject(i).getString("pack_id");
+			String dbPackId = dbPackArray.getString(i);
 
 			int j = 0;
 			for (j = 0; j < packArray.length(); j++) {
 				// get client pack id
-				String clientPackId = packArray.getJSONObject(j).getString(
-						"pack_id");
+				String clientPackId = packArray.getString(j);
 				if (clientPackId.equals(dbPackId))
 					break;
 			}
@@ -488,14 +496,13 @@ public class SyncManerger extends HttpServlet {
 
 		// add folderHasPack in db
 		for (int i = 0; i < packArray.length(); i++) {
-			String packId = packArray.getJSONObject(i).getString("pack_id");
+			String packId = packArray.getString(i);
 
 			// find folder data in db
 			int j = 0;
 			for (; j < dbPackArray.length(); j++) {
 				// get db pack id
-				String dbPackId = dbPackArray.getJSONObject(i).getString(
-						"pack_id");
+				String dbPackId = dbPackArray.getString(j);
 
 				// find the same id and name
 				if (packId.equals(dbPackId))
