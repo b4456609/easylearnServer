@@ -41,22 +41,6 @@ public class SyncManerger extends HttpServlet {
 	public SyncManerger() {
 		super();
 
-		// create current time stamp
-		Calendar calendar = Calendar.getInstance();
-		Date now = calendar.getTime();
-		syncTimeStamp = now.getTime();
-
-		// initial set success sync
-		responseJson = new JSONObject();
-		try {
-			syncInfo.put("status", "success");
-			syncInfo.put("timestamp", syncTimeStamp);
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-
-		// prepare db
-		db = new DBManerger();
 	}
 
 	/**
@@ -66,6 +50,9 @@ public class SyncManerger extends HttpServlet {
 	protected void doPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 		System.out.println("do post");
+
+		initial();
+
 		try {
 			// get json data from request
 			String syncJsonData = request.getParameter("sync_data");
@@ -79,10 +66,11 @@ public class SyncManerger extends HttpServlet {
 			folderData = syncData.getJSONArray("folder");
 
 			// decide server or client has newer data by last_sync_time
-			if (isClientNewer())
+			if (isClientNewer()) {
 				syncBaseOnClient();
-			else
+			} else {
 				syncBaseOnServer();
+			}
 
 			syncInfo.put("upload_file", uploadFile);
 			responseJson.put("sync", syncInfo);
@@ -95,7 +83,31 @@ public class SyncManerger extends HttpServlet {
 		} finally {
 			response.setContentType("application/json");
 			response.getWriter().write(responseJson.toString());
+			System.out.println(responseJson.toString());
 		}
+	}
+
+	private void initial() {
+
+		// initial set success sync
+		responseJson = new JSONObject();
+		syncInfo = new JSONObject();
+		uploadFile = new JSONArray();
+
+		// create current time stamp
+		Calendar calendar = Calendar.getInstance();
+		Date now = calendar.getTime();
+		syncTimeStamp = now.getTime();
+
+		try {
+			syncInfo.put("status", "success");
+			syncInfo.put("timestamp", syncTimeStamp);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+		// prepare db
+		db = new DBManerger();
 	}
 
 	// decide server or client has newer data by last_sync_time
@@ -103,18 +115,22 @@ public class SyncManerger extends HttpServlet {
 
 		// get user's last sync time from server
 		JSONObject dbSetting = db.getSetting(userId);
-		//this user not exit in db
-		if(dbSetting.length() == 0){
+		// this user not exit in db
+		if (dbSetting.length() == 0) {
 			db.addUser(userId, userData.getString("name"));
 			db.addSetting(userId);
 			return true;
 		}
-		
+
 		long dbSyncTime = dbSetting.getLong("last_sync_time");
-		
+
 		// get user's last sync time from client
-		long clientSyncTime = new Timestamp(userData.getJSONObject(
-				"setting").getLong("last_sync_time")).getTime();
+		long clientSyncTime = userData.getJSONObject("setting").getLong(
+				"last_sync_time");
+
+		System.out.println("dbSyncTime" + dbSyncTime);
+		System.out.println("clientSyncTime" + clientSyncTime);
+		System.out.println(dbSyncTime - clientSyncTime);
 
 		// compare who's data are newer
 		// true mean clientSyncTime is after dbSyncTimeStamp
@@ -205,8 +221,8 @@ public class SyncManerger extends HttpServlet {
 		System.out.println("syncBaseOnClient");
 		// update setting
 		JSONObject setting = userData.getJSONObject("setting");
-		db.updateSetting(setting.getBoolean("wifi_sync"),
-				setting.getBoolean("mobile_network_sync"),
+		db.updateSetting(setting.getBoolean("wifi_sync"), setting
+				.getBoolean("mobile_network_sync"),
 				new Timestamp(syncTimeStamp).toString(), userId);
 
 		System.out.println("remove all setting");
@@ -218,11 +234,10 @@ public class SyncManerger extends HttpServlet {
 
 		System.out.println("folderSyncBaseOnClient");
 
-
 		System.out.println("packSyncBaseOnClient");
 		// Update pack
 		packSyncBaseOnClient();
-		
+
 		// Update folder
 		folderSyncBaseOnClient();
 
