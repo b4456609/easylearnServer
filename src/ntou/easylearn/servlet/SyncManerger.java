@@ -30,7 +30,7 @@ public class SyncManerger extends HttpServlet {
 	private JSONArray folderData;
 	private String userId;
 	private DBManerger db;
-	private Timestamp syncTimeStamp;
+	private long syncTimeStamp;
 	private JSONObject responseJson;
 	private JSONObject syncInfo = new JSONObject();
 	private JSONArray uploadFile = new JSONArray();
@@ -44,13 +44,13 @@ public class SyncManerger extends HttpServlet {
 		// create current time stamp
 		Calendar calendar = Calendar.getInstance();
 		Date now = calendar.getTime();
-		syncTimeStamp = new java.sql.Timestamp(now.getTime());
+		syncTimeStamp = now.getTime();
 
 		// initial set success sync
 		responseJson = new JSONObject();
 		try {
 			syncInfo.put("status", "success");
-			syncInfo.put("timestamp", syncTimeStamp.toString());
+			syncInfo.put("timestamp", syncTimeStamp);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -88,7 +88,7 @@ public class SyncManerger extends HttpServlet {
 			responseJson.put("sync", syncInfo);
 
 			// update sync time to db
-			db.syncTime(syncTimeStamp.toString(), userId);
+			db.syncTime(new Timestamp(syncTimeStamp).toString(), userId);
 		} catch (JSONException e) {
 			e.printStackTrace();
 			exceptionHandler();
@@ -109,9 +109,9 @@ public class SyncManerger extends HttpServlet {
 			db.addSetting(userId);
 			return true;
 		}
-		Timestamp time = Timestamp.valueOf(dbSetting.getString("last_sync_time"));
-		long dbSyncTime = time.getTime();
-
+		
+		long dbSyncTime = dbSetting.getLong("last_sync_time");
+		
 		// get user's last sync time from client
 		long clientSyncTime = new Timestamp(userData.getJSONObject(
 				"setting").getLong("last_sync_time")).getTime();
@@ -207,7 +207,7 @@ public class SyncManerger extends HttpServlet {
 		JSONObject setting = userData.getJSONObject("setting");
 		db.updateSetting(setting.getBoolean("wifi_sync"),
 				setting.getBoolean("mobile_network_sync"),
-				syncTimeStamp.toString(), userId);
+				new Timestamp(syncTimeStamp).toString(), userId);
 
 		System.out.println("remove all setting");
 		// remove all userHasVersion convenient for sync
@@ -516,17 +516,6 @@ public class SyncManerger extends HttpServlet {
 			if (j == dbPackArray.length())
 				db.addFolderHasPack(clientFolderId, packId, userId);
 		}
-	}
-
-	public JSONObject test() {
-		userId = "00157016";
-		try {
-			syncBaseOnServer();
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return responseJson;
 	}
 
 }

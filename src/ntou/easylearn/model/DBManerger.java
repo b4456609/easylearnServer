@@ -279,12 +279,12 @@ public class DBManerger {
      */
 	public String updateFolder(String id, String name, String user_id) {
 		try {
-			String updateSQL = "UPDATE folder " + "SET id = ?, name = ?"
-					+ "WHERE user_id =?";
+			String updateSQL = "UPDATE folder " + "SET name = ?"
+					+ "WHERE user_id =? AND  id = ?";
 			pStat = dbConnection.prepareStatement(updateSQL);
-			pStat.setString(1, id);
-			pStat.setString(2, name);
-			pStat.setString(3, user_id);
+			pStat.setString(1, name);
+			pStat.setString(2, user_id);
+			pStat.setString(3, id);
 			pStat.executeUpdate();
 			return ("[DBManerger updateFolder] Success");
 		}
@@ -857,7 +857,7 @@ public class DBManerger {
 
 	public String addUserHasVersion(String UserId, String version_id,
 			String version_pack_id) {
-
+		
 		try {
 			String insertdbSQL = "INSERT INTO `easylearn`.`user_has_version` (`user_id`, `version_id`, `version_pack_id`) VALUES (?, ?, ?)";
 			pStat = dbConnection.prepareStatement(insertdbSQL);
