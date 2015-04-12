@@ -104,15 +104,17 @@ public class SyncManerger extends HttpServlet {
 		// get user's last sync time from server
 		JSONObject dbSetting = db.getSetting(userId);
 		//this user not exit in db
-		if(dbSetting.length() == 0)
+		if(dbSetting.length() == 0){
+			db.addUser(userId, userData.getString("name"));
+			db.addSetting(userId);
 			return true;
-		
+		}
 		Timestamp time = Timestamp.valueOf(dbSetting.getString("last_sync_time"));
 		long dbSyncTime = time.getTime();
 
 		// get user's last sync time from client
-		long clientSyncTime = Timestamp.valueOf(userData.getJSONObject(
-				"setting").getString("last_sync_time")).getTime();
+		long clientSyncTime = new Timestamp(userData.getJSONObject(
+				"setting").getLong("last_sync_time")).getTime();
 
 		// compare who's data are newer
 		// true mean clientSyncTime is after dbSyncTimeStamp
@@ -164,7 +166,7 @@ public class SyncManerger extends HttpServlet {
 			// user_has_version and version
 			JSONArray version = db.getPacksVersion(packId, userId);
 			for (int j = 0; j < version.length(); j++) {
-				String versionId = version.getJSONObject(i).getString("id");
+				String versionId = version.getJSONObject(j).getString("id");
 
 				// get bookmark jsonArray by version and userid in bookmark
 				// add bookmark jsonArray to Version
@@ -216,12 +218,13 @@ public class SyncManerger extends HttpServlet {
 
 		System.out.println("folderSyncBaseOnClient");
 
-		// Update folder
-		folderSyncBaseOnClient();
 
 		System.out.println("packSyncBaseOnClient");
 		// Update pack
 		packSyncBaseOnClient();
+		
+		// Update folder
+		folderSyncBaseOnClient();
 
 	}
 

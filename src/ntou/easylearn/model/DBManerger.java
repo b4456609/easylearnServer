@@ -142,8 +142,9 @@ public class DBManerger {
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, userId);
 			rs = pStat.executeQuery();
-
-			obj = ResultSetConverter.convert(rs).getJSONObject(0);
+			JSONArray jsonArray = ResultSetConverter.convert(rs);
+			if (jsonArray.length() != 0)
+				obj = jsonArray.getJSONObject(0);
 		} catch (SQLException e) {
 			System.out.println("[DBManerger getSetting] Exception :"
 					+ e.toString());
@@ -611,7 +612,8 @@ public class DBManerger {
 			pStat.executeUpdate();
 			return ("[DBManerger deleteFolderHasPack] Success");
 		} catch (SQLException e) {
-			System.out.println("[DBManerger deleteFolderHasPack] :" + e.toString());
+			System.out.println("[DBManerger deleteFolderHasPack] :"
+					+ e.toString());
 		} finally {
 			closeDatabaseConnection();
 		}
@@ -732,7 +734,9 @@ public class DBManerger {
 			pStat.setString(2, filename);
 			rs = pStat.executeQuery();
 
-			obj = ResultSetConverter.convert(rs).getJSONObject(0);
+			JSONArray jsonArray = ResultSetConverter.convert(rs);
+			if (jsonArray.length() != 0)
+				obj = jsonArray.getJSONObject(0);
 
 		} catch (SQLException e) {
 			System.out.println("[DBManerger getFile] Exception :"
@@ -918,7 +922,7 @@ public class DBManerger {
 	public String deleteFile(String name, String versionId) {
 		try {
 			selectSQL = "DELETE FROM `file` "
-					+ "WHERE `filename`= ? and `verion_id`=?";
+					+ "WHERE `filename`= ? and `version_id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, name);
 			pStat.setString(2, versionId);
@@ -1001,7 +1005,7 @@ public class DBManerger {
 			pStat.setString(1, comment_id);
 			rs = pStat.executeQuery();
 			JSONArray temp = ResultSetConverter.convert(rs);
-			if(temp.length() != 0)
+			if (temp.length() != 0)
 				obj = temp.getJSONObject(0);
 
 		} catch (SQLException e) {
