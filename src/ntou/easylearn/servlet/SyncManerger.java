@@ -59,7 +59,7 @@ public class SyncManerger extends HttpServlet {
 			response.setCharacterEncoding("UTF-8");
 			String syncJsonData = request.getParameter("sync_data");
 
-			System.out.println(syncJsonData);
+			//System.out.println(syncJsonData);
 
 			// extract sync data to user and setting
 			syncData = new JSONObject(syncJsonData);
@@ -85,7 +85,7 @@ public class SyncManerger extends HttpServlet {
 		} finally {
 			response.setContentType("application/json");
 			response.getWriter().write(responseJson.toString());
-			System.out.println(responseJson.toString());
+			//System.out.println(responseJson.toString());
 		}
 	}
 
@@ -420,6 +420,7 @@ public class SyncManerger extends HttpServlet {
 			throws JSONException {
 		for (int i = 0; i < commentArray.length(); i++) {
 			JSONObject comment = commentArray.getJSONObject(i);
+			System.out.println(comment);
 
 			// get comment id
 			String commentId = comment.getString("id");
