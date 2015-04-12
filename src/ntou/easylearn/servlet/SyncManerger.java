@@ -273,10 +273,12 @@ public class SyncManerger extends HttpServlet {
 						pack.getString("creator_user_id"),
 						pack.getString("cover_filename"));
 				JSONObject newFile = new JSONObject();
-				newFile.put("name", pack.getString("cover_filename"));
-				newFile.put("version_id", "");
-				newFile.put("version_pack_id", packId);
-				uploadFile.put(newFile);
+				if (pack.getString("cover_filename").equals("")) {
+					newFile.put("name", pack.getString("cover_filename"));
+					newFile.put("version_id", "");
+					newFile.put("version_pack_id", packId);
+					uploadFile.put(newFile);
+				}
 			}
 			// yes update it
 			else {
@@ -351,18 +353,17 @@ public class SyncManerger extends HttpServlet {
 		// get db file array
 		JSONArray dbFileArray = db.getFile(versionId);
 
+		System.out.println(fileArray);
+
 		// delete file
 		for (int j = 0; j < dbFileArray.length(); j++) {
-
-			JSONObject dbfile = dbFileArray.getJSONObject(j);
 			// get file name
-			String dbname = dbfile.getString("filename");
+			String dbname = dbFileArray.getString(j);
 
 			int i;
 			for (i = 0; i < fileArray.length(); i++) {
-				JSONObject file = fileArray.getJSONObject(i);
 				// get file name
-				String name = file.getString("filename");
+				String name = fileArray.getString(i);
 
 				if (dbname.equals(name))
 					break;

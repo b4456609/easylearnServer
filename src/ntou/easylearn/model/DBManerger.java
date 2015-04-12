@@ -727,14 +727,12 @@ public class DBManerger {
 			pStat.setString(1, version_id);
 			rs = pStat.executeQuery();
 
-			jsonArray = ResultSetConverter.convert(rs);
-
+			while(rs.next()){
+				jsonArray.put(rs.getString("filename"));
+			}
 		} catch (SQLException e) {
 			System.out.println("[DBManerger getFile] Exception :"
 					+ e.toString());
-		} catch (JSONException e) {
-			System.out.print("[DBManerger getFile] Exception :");
-			e.printStackTrace();
 		} finally {
 			closeDatabaseConnection();
 		}
