@@ -342,6 +342,23 @@ public class DBManerger {
 		}
 		return "[DBManerger deleteFolder] Fail";
 	}
+	
+	public String deleteUserFolder(String userId) {
+		try {
+			String DELETE_SQL = "DELETE FROM `folder` " + "WHERE user_id= ?";
+			pStat = dbConnection.prepareStatement(DELETE_SQL);
+			pStat.setString(1, userId);
+			pStat.executeUpdate();
+			return ("[DBManerger deleteFolder] Success");
+		}
+		/*--------------------- failed to inserting data to database  ---------------------*/
+		catch (SQLException e) {
+			System.out.println("[DBManerger deleteFolder] :" + e.toString());
+		} finally {
+			closeDatabaseConnection();
+		}
+		return "[DBManerger deleteFolder] Fail";
+	}
 
 	/**
 	 * get user's folder return json array
@@ -605,7 +622,7 @@ public class DBManerger {
 	public String deleteFolderHasPack(String folder_id, String user_id) {
 		try {
 			String DELETE_SQL = "DELETE FROM `folder_has_pack` "
-					+ "WHERE `folder_id`= ? and `user_id`=?";
+					+ "WHERE `folder_id`= ? and `folder_user_id`=?";
 			pStat = dbConnection.prepareStatement(DELETE_SQL);
 			pStat.setString(1, folder_id);
 			pStat.setString(2, user_id);

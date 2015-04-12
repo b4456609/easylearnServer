@@ -55,6 +55,8 @@ public class SyncManerger extends HttpServlet {
 
 		try {
 			// get json data from request
+			request.setCharacterEncoding("UTF-8");
+			response.setCharacterEncoding("UTF-8");
 			String syncJsonData = request.getParameter("sync_data");
 
 			System.out.println(syncJsonData);
@@ -228,6 +230,9 @@ public class SyncManerger extends HttpServlet {
 		System.out.println("remove all setting");
 		// remove all userHasVersion convenient for sync
 		db.deleteUserHasVersion(userId);
+
+		// remove all userHasVersion convenient for sync
+		db.deleteBookmark(userId);
 
 		// remove all userHasVersion convenient for sync
 		db.deleteBookmark(userId);
@@ -428,57 +433,75 @@ public class SyncManerger extends HttpServlet {
 
 	private void folderSyncBaseOnClient() throws JSONException {
 
-		// get folder jsonArray by userid
-		JSONArray dbFolder = db.getFolder(userId);
+		// // get folder jsonArray by userid
+		// JSONArray dbFolder = db.getFolder(userId);
+		//
+		// System.out.println("delete folder");
+		// // delete folder in db
+		// for (int i = 0; i < dbFolder.length(); i++) {
+		// String itemId = dbFolder.getJSONObject(i).getString("id");
+		//
+		// int j = 0;
+		// for (; j < folderData.length(); j++) {
+		// if (itemId.equals(folderData.getJSONObject(j).getString("id")))
+		// break;
+		// }
+		// if (j == folderData.length()) {
+		// db.deleteFolder(itemId);
+		// }
+		// }
+		//
+		// System.out.println("update and add  folder");
+		// // update and add folder in db
+		// for (int i = 0; i < folderData.length(); i++) {
+		// // get client folder data
+		// String clientFolderId = folderData.getJSONObject(i).getString("id");
+		// String clientFoldername = folderData.getJSONObject(i).getString(
+		// "name");
+		//
+		// // find folder data in db
+		// int j = 0;
+		// for (; j < dbFolder.length(); j++) {
+		// // get db folder data
+		// String dbFolderId = dbFolder.getJSONObject(j).getString("id");
+		// String dbFoldername = dbFolder.getJSONObject(j).getString(
+		// "name");
+		//
+		// // find the same id ,but different name
+		// if (clientFolderId.equals(dbFolderId)
+		// && !clientFoldername.equals(dbFoldername)) {
+		// // update folder content
+		// db.updateFolder(clientFolderId, clientFoldername, userId);
+		// break;
+		// }
+		//
+		// // find the same id and name
+		// else if (clientFolderId.equals(dbFolderId)
+		// && clientFoldername.equals(dbFoldername))
+		// break;
+		// }
+		//
+		// // not found folder in db, add it in db
+		// if (j == dbFolder.length())
+		// db.addFolder(clientFolderId, clientFoldername, userId);
+		//
+		// JSONArray dbPackArray = db.getPackIDArray(userId, folderData
+		// .getJSONObject(i).getString("id"));
+		// JSONArray packArray = folderData.getJSONObject(i).getJSONArray(
+		// "pack");
+		// packInFolderSync(clientFolderId, dbPackArray, packArray);
+		// }
 
-		System.out.println("delete folder");
-		// delete folder in db
-		for (int i = 0; i < dbFolder.length(); i++) {
-			String itemId = dbFolder.getJSONObject(i).getString("id");
+		// delete all folder
+		db.deleteUserFolder(userId);
 
-			int j = 0;
-			for (; j < folderData.length(); j++) {
-				if (itemId.equals(folderData.getJSONObject(j).getString("id")))
-					break;
-			}
-			if (j == folderData.length()) {
-				db.deleteFolder(itemId);
-			}
-		}
-
-		System.out.println("update and add  folder");
-		// update and add folder in db
 		for (int i = 0; i < folderData.length(); i++) {
 			// get client folder data
 			String clientFolderId = folderData.getJSONObject(i).getString("id");
 			String clientFoldername = folderData.getJSONObject(i).getString(
 					"name");
 
-			// find folder data in db
-			int j = 0;
-			for (; j < dbFolder.length(); j++) {
-				// get db folder data
-				String dbFolderId = dbFolder.getJSONObject(j).getString("id");
-				String dbFoldername = dbFolder.getJSONObject(j).getString(
-						"name");
-
-				// find the same id ,but different name
-				if (clientFolderId.equals(dbFolderId)
-						&& !clientFoldername.equals(dbFoldername)) {
-					// update folder content
-					db.updateFolder(clientFolderId, clientFoldername, userId);
-					break;
-				}
-
-				// find the same id and name
-				else if (clientFolderId.equals(dbFolderId)
-						&& clientFoldername.equals(dbFoldername))
-					break;
-			}
-
-			// not found folder in db, add it in db
-			if (j == dbFolder.length())
-				db.addFolder(clientFolderId, clientFoldername, userId);
+			db.addFolder(clientFolderId, clientFoldername, userId);
 
 			JSONArray dbPackArray = db.getPackIDArray(userId, folderData
 					.getJSONObject(i).getString("id"));
@@ -486,31 +509,50 @@ public class SyncManerger extends HttpServlet {
 					"pack");
 			packInFolderSync(clientFolderId, dbPackArray, packArray);
 		}
-
 	}
 
 	private void packInFolderSync(String clientFolderId, JSONArray dbPackArray,
 			JSONArray packArray) throws JSONException {
 		// check pack in folder
 
-		System.out.println(dbPackArray);
-
-		// delete folderHasPack in db
-		for (int i = 0; i < dbPackArray.length(); i++) {
-			String dbPackId = dbPackArray.getString(i);
-
-			int j = 0;
-			for (j = 0; j < packArray.length(); j++) {
-				// get client pack id
-				String clientPackId = packArray.getString(j);
-				if (clientPackId.equals(dbPackId))
-					break;
-			}
-
-			// not found folder in client, delete it in db
-			if (j == packArray.length())
-				db.deleteFolderHasPack(clientFolderId, dbPackId);
-		}
+		// System.out.println(dbPackArray);
+		//
+		// // delete folderHasPack in db
+		// for (int i = 0; i < dbPackArray.length(); i++) {
+		// String dbPackId = dbPackArray.getString(i);
+		//
+		// int j = 0;
+		// for (j = 0; j < packArray.length(); j++) {
+		// // get client pack id
+		// String clientPackId = packArray.getString(j);
+		// if (clientPackId.equals(dbPackId))
+		// break;
+		// }
+		//
+		// // not found folder in client, delete it in db
+		// if (j == packArray.length())
+		// db.deleteFolderHasPack(clientFolderId, dbPackId);
+		// }
+		//
+		// // add folderHasPack in db
+		// for (int i = 0; i < packArray.length(); i++) {
+		// String packId = packArray.getString(i);
+		//
+		// // find folder data in db
+		// int j = 0;
+		// for (; j < dbPackArray.length(); j++) {
+		// // get db pack id
+		// String dbPackId = dbPackArray.getString(j);
+		//
+		// // find the same id and name
+		// if (packId.equals(dbPackId))
+		// break;
+		// }
+		//
+		// // not found folder in db, add it in db
+		// if (j == dbPackArray.length())
+		// db.addFolderHasPack(clientFolderId, packId, userId);
+		// }
 
 		// add folderHasPack in db
 		for (int i = 0; i < packArray.length(); i++) {
@@ -532,5 +574,4 @@ public class SyncManerger extends HttpServlet {
 				db.addFolderHasPack(clientFolderId, packId, userId);
 		}
 	}
-
 }
