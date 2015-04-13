@@ -70,9 +70,8 @@ public class SyncManerger extends HttpServlet {
 			// decide server or client has newer data by last_sync_time
 			if (isClientNewer()) {
 				syncBaseOnClient();
-			} else {
-				syncBaseOnServer();
 			}
+			syncBaseOnServer();
 
 			syncInfo.put("upload_file", uploadFile);
 			responseJson.put("sync", syncInfo);
@@ -310,29 +309,43 @@ public class SyncManerger extends HttpServlet {
 				continue;
 			} else if (contentBuffer.substring(index, index + 17).equals(
 					"<span class=\"note")
-					|| contentBuffer.substring(index, index + 6).equals(
+					|| contentBuffer.substring(index, index + 7).equals(
 							"</span>")) {
 				int last = contentBuffer.indexOf(">", index);
-				String newStr = contentBuffer.substring(index, last);
+				String newStr;
+				
+				//deal with last index
+				if (last == contentBuffer.length() - 1) {
+					newStr = contentBuffer.substring(index);
+				} else {
+					newStr = contentBuffer.substring(index, last + 1);
+				}
 				System.out.println(newStr);
 				dbContentBuffer.insert(index, newStr);
 				index = last;
 			} else if (dbContentBuffer.substring(index, index + 17).equals(
 					"<span class=\"note")
-					|| dbContentBuffer.substring(index, index + 6).equals(
-							"<span class=\"note")) {
+					|| dbContentBuffer.substring(index, index + 7).equals(
+							"</span>")) {
 				int last = dbContentBuffer.indexOf(">", index);
-				String newStr = dbContentBuffer.substring(index, last);
+				String newStr ;
+				
+				//deal with last index
+				if (last == dbContentBuffer.length() - 1) {
+					newStr = dbContentBuffer.substring(index);
+				} else {
+					newStr = dbContentBuffer.substring(index, last + 1);
+				}
 				System.out.println(newStr);
 				contentBuffer.insert(index, newStr);
 				index = last;
-			}
-			else{
+			} else {
 				db.updateVersion(id, content, create_time, packId, is_public);
 				break;
 			}
 		}
-		db.updateVersion(id, contentBuffer.toString(), create_time, packId, is_public);
+		db.updateVersion(id, contentBuffer.toString(), create_time, packId,
+				is_public);
 	}
 
 	private void versionSyncBaseOnclient(String packId, JSONArray versionArray)
@@ -459,11 +472,11 @@ public class SyncManerger extends HttpServlet {
 			throws JSONException {
 		for (int i = 0; i < commentArray.length(); i++) {
 			JSONObject comment = commentArray.getJSONObject(i);
-			System.out.println(comment);
 
 			// get comment id
 			String commentId = comment.getString("id");
 			if (db.getComment(commentId).length() == 0) {
+				System.out.println(db.getComment(commentId).length());
 				// add comment
 				db.addComment(commentId, comment.getString("content"),
 						comment.getLong("create_time"), noteId, userId);
