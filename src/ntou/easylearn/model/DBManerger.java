@@ -1025,7 +1025,7 @@ public class DBManerger {
 
 		try {
 			selectSQL = "SELECT *"
-					+ "FROM `easylearn`.`comment_with_name` " + "WHERE `note_id`=?";
+					+ "FROM `easylearn`.`comment_with_name` " + "WHERE `id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, comment_id);
 			rs = pStat.executeQuery();
