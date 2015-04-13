@@ -35,8 +35,7 @@ public class FileUploadManerger extends HttpServlet {
 			HttpServletResponse response) throws ServletException, IOException {
 		String packId = request.getParameter("pack_id");
 		String versionId = request.getParameter("version_id");
-		Part filePart = request.getPart("file"); // Retrieves <input type="file"
-													// name="file">
+		Part filePart = request.getPart("file");
 		String fileName = filePart.getSubmittedFileName();
 		InputStream fileContent = filePart.getInputStream();
 
