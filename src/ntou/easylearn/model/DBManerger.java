@@ -995,10 +995,15 @@ public class DBManerger {
 			rs = pStat.executeQuery();
 
 			jsonArray = ResultSetConverter.convert(rs);
+			
+			System.out.println(jsonArray);
 			int i;
 			for(i = 0; i < jsonArray.length(); i++){
-				if(jsonArray.getJSONObject(i).getLong("create_time") < time){
+				System.out.println(jsonArray.getJSONObject(i).getLong("create_time"));
+				System.out.println(jsonArray.getJSONObject(i).getLong("create_time") -  time);
+				if(jsonArray.getJSONObject(i).getLong("create_time") <= time){
 					jsonArray.remove(i);
+					i--;
 				}
 			}
 

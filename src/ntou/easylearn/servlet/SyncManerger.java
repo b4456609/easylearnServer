@@ -296,6 +296,10 @@ public class SyncManerger extends HttpServlet {
 			versionSyncBaseOnclient(packId, versionArray);
 		}
 	}
+	
+	private void updateVersion(String id, content, create_time, packId, is_public){
+		
+	}
 
 	private void versionSyncBaseOnclient(String packId, JSONArray versionArray)
 			throws JSONException {

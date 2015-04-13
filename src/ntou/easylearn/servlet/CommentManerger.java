@@ -37,14 +37,18 @@ public class CommentManerger extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
+		request.setCharacterEncoding("UTF-8");
+		response.setCharacterEncoding("UTF-8");
+		
 		String note_id = request.getParameter("note_id");
         String lastest_create_time = request.getParameter("lastest_create_time");
+        System.out.println(note_id);
+        System.out.println(lastest_create_time);
         long time = Long.valueOf(lastest_create_time).longValue();
         
         JSONArray comments = db.getCommentsAfterTime(note_id, time);
         
-        System.out.println(note_id);
-        System.out.println(lastest_create_time);
+        
         System.out.println(comments);
         
         response.setContentType("application/json");
@@ -57,6 +61,9 @@ public class CommentManerger extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
+		request.setCharacterEncoding("UTF-8");
+		response.setCharacterEncoding("UTF-8");
+		
 		// get data from request
 		String noteId = request.getParameter("noteId");
 		String newComment = request.getParameter("newComment");
