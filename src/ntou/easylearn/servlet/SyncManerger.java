@@ -59,7 +59,7 @@ public class SyncManerger extends HttpServlet {
 			response.setCharacterEncoding("UTF-8");
 			String syncJsonData = request.getParameter("sync_data");
 
-			//System.out.println(syncJsonData);
+			// System.out.println(syncJsonData);
 
 			// extract sync data to user and setting
 			syncData = new JSONObject(syncJsonData);
@@ -85,7 +85,7 @@ public class SyncManerger extends HttpServlet {
 		} finally {
 			response.setContentType("application/json");
 			response.getWriter().write(responseJson.toString());
-			//System.out.println(responseJson.toString());
+			// System.out.println(responseJson.toString());
 		}
 	}
 
@@ -296,9 +296,43 @@ public class SyncManerger extends HttpServlet {
 			versionSyncBaseOnclient(packId, versionArray);
 		}
 	}
-	
-	private void updateVersion(String id, content, create_time, packId, is_public){
-		
+
+	private void updateVersion(String id, String content, long create_time,
+			String packId, boolean is_public, String versionId)
+			throws JSONException {
+		String dbContent = db.getVersion(versionId).getString("content");
+		StringBuffer dbContentBuffer = new StringBuffer(dbContent);
+		StringBuffer contentBuffer = new StringBuffer(content);
+		int index = 0;
+		while (index < contentBuffer.length()) {
+			if (contentBuffer.charAt(index) == dbContentBuffer.charAt(index)) {
+				index++;
+				continue;
+			} else if (contentBuffer.substring(index, index + 17).equals(
+					"<span class=\"note")
+					|| contentBuffer.substring(index, index + 6).equals(
+							"</span>")) {
+				int last = contentBuffer.indexOf(">", index);
+				String newStr = contentBuffer.substring(index, last);
+				System.out.println(newStr);
+				dbContentBuffer.insert(index, newStr);
+				index = last;
+			} else if (dbContentBuffer.substring(index, index + 17).equals(
+					"<span class=\"note")
+					|| dbContentBuffer.substring(index, index + 6).equals(
+							"<span class=\"note")) {
+				int last = dbContentBuffer.indexOf(">", index);
+				String newStr = dbContentBuffer.substring(index, last);
+				System.out.println(newStr);
+				contentBuffer.insert(index, newStr);
+				index = last;
+			}
+			else{
+				db.updateVersion(id, content, create_time, packId, is_public);
+				break;
+			}
+		}
+		db.updateVersion(id, contentBuffer.toString(), create_time, packId, is_public);
 	}
 
 	private void versionSyncBaseOnclient(String packId, JSONArray versionArray)
@@ -320,10 +354,10 @@ public class SyncManerger extends HttpServlet {
 						version.getString("creator_user_id"));
 			} else {
 				// yes update it
-				db.updateVersion(version.getString("id"),
+				updateVersion(version.getString("id"),
 						version.getString("content"),
 						version.getLong("create_time"), packId,
-						version.getBoolean("is_public"));
+						version.getBoolean("is_public"), versionId);
 			}
 
 			// add user has version
