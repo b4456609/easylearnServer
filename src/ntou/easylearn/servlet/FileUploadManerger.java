@@ -1,16 +1,22 @@
 package ntou.easylearn.servlet;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 
+import javax.imageio.ImageIO;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
+
+import sun.misc.BASE64Decoder;
 
 /**
  * Servlet implementation class FileUploadManerger
@@ -35,17 +41,20 @@ public class FileUploadManerger extends HttpServlet {
 			HttpServletResponse response) throws ServletException, IOException {
 		String packId = request.getParameter("pack_id");
 		String versionId = request.getParameter("version_id");
-		Part filePart = request.getPart("file"); // Retrieves <input type="file"
-													// name="file">
-		String fileName = filePart.getSubmittedFileName();
-		InputStream fileContent = filePart.getInputStream();
-
-		File file = new File("D:/easylearn/file/" + packId + "/" + versionId
-				+ "/", fileName);
-
-		Files.copy(fileContent, file.toPath()); // How to obtain part is answered in
-											// http://stackoverflow.com/a/2424824
-
-	}
-
+		String filename = request.getParameter("filename");
+		String imageString = request.getParameter("file");
+		
+		System.out.println("get upload img" + packId + versionId + filename);
+		//System.out.println(imageString);
+		
+		byte[] btDataFile = new sun.misc.BASE64Decoder().decodeBuffer(imageString);
+		File of = new File("D:\\"+filename);
+		FileOutputStream osf = new FileOutputStream(of);
+		osf.write(btDataFile);
+		osf.flush();
+    }
+// //ImageIO.write(newImg, "png", new File("D:\\easylearn\\file\\" + packId + "\\" + versionId
+//		//		+ "\\" + filename));
+//		//System.out.println(newImg);
+//		ImageIO.write(newImg, "jpg", new File("D:\\"+filename));
 }
