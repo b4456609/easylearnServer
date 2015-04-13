@@ -203,8 +203,9 @@ public class SyncManerger extends HttpServlet {
 					String noteId = notes.getJSONObject(k).getString("id");
 					notes.getJSONObject(k).put("comment",
 							db.getComments(noteId));
+					System.out.println(noteId + "   " + db.getComments(noteId));
 				}
-
+				System.out.println(notes.length());
 				// put notes in version
 				version.getJSONObject(j).put("note", notes);
 

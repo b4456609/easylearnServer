@@ -963,7 +963,7 @@ public class DBManerger {
 		try {
 			selectSQL = "SELECT *"
 					+ "FROM `easylearn`.`comment_with_name`"
-					+ "WHERE `id`=?";
+					+ "WHERE `note_id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, note_id);
 			rs = pStat.executeQuery();
@@ -989,7 +989,7 @@ public class DBManerger {
 		try {
 			selectSQL = "SELECT *"
 					+ "FROM `easylearn`.`comment_with_name` "
-					+ "WHERE `id`=? AND create_time > ?";
+					+ "WHERE `note_id`=? AND create_time > ?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, note_id);
 			pStat.setString(2, time);
@@ -1015,7 +1015,7 @@ public class DBManerger {
 
 		try {
 			selectSQL = "SELECT *"
-					+ "FROM `easylearn`.`comment_with_name` " + "WHERE `id`=?";
+					+ "FROM `easylearn`.`comment_with_name` " + "WHERE `note_id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, comment_id);
 			rs = pStat.executeQuery();
