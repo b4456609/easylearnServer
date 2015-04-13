@@ -274,7 +274,7 @@ public class SyncManerger extends HttpServlet {
 						pack.getString("creator_user_id"),
 						pack.getString("cover_filename"));
 				JSONObject newFile = new JSONObject();
-				if (pack.getString("cover_filename").equals("")) {
+				if (!pack.getString("cover_filename").equals("")) {
 					newFile.put("name", pack.getString("cover_filename"));
 					newFile.put("version_id", "");
 					newFile.put("version_pack_id", packId);
