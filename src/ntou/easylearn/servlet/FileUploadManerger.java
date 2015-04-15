@@ -47,6 +47,9 @@ public class FileUploadManerger extends HttpServlet {
 		String img = request.getParameter("file");
 		String filename = request.getParameter("filename");
 		
+		int start = img.indexOf(',');
+		img = img.substring(start + 1);
+		
 		decode(img, packId, versionId, filename);
 	}
 	
