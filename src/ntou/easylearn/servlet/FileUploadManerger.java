@@ -3,10 +3,13 @@ package ntou.easylearn.servlet;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
+import java.util.Base64;
 
 import javax.imageio.ImageIO;
 import javax.servlet.ServletException;
@@ -41,15 +44,34 @@ public class FileUploadManerger extends HttpServlet {
 			HttpServletResponse response) throws ServletException, IOException {
 		String packId = request.getParameter("pack_id");
 		String versionId = request.getParameter("version_id");
-		Part filePart = request.getPart("file");
-		String fileName = filePart.getSubmittedFileName();
-		InputStream fileContent = filePart.getInputStream();
+		String img = request.getParameter("file");
+		String filename = request.getParameter("filename");
+		
+		decode(img, packId, versionId, filename);
+	}
+	
+	private void decode(String img, String packId, String versionId, String filename) {
+		try {
+			// Note preferred way of declaring an array variable
+			byte[] data = Base64.getDecoder().decode(img);
 
-		File file = new File("D:/easylearn/file/" + packId + "/" + versionId
-				+ "/", fileName);
+			String path = "D:" + File.separator + "easylearn" + File.separator +  packId + File.separator + versionId + File.separator
+					+ filename;
+			// (use relative path for Unix systems)
+			File f = new File(path);
+			// (works for both Windows and Linux)
+			f.getParentFile().mkdirs();
+			f.createNewFile();
 
-		Files.copy(fileContent, file.toPath()); // How to obtain part is answered in
-											// http://stackoverflow.com/a/2424824
+			OutputStream stream = new FileOutputStream(path);
+			stream.write(data);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 
