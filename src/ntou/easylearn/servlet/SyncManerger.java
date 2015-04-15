@@ -303,8 +303,20 @@ public class SyncManerger extends HttpServlet {
 		StringBuffer dbContentBuffer = new StringBuffer(dbContent);
 		StringBuffer contentBuffer = new StringBuffer(content);
 		int index = 0;
-		while (index < contentBuffer.length()) {
-			if (contentBuffer.charAt(index) == dbContentBuffer.charAt(index)) {
+		while ((index < contentBuffer.length())
+				&& (index < dbContentBuffer.length())) {
+			if (index == contentBuffer.length()) {
+				String newStr;
+				newStr = dbContentBuffer.substring(index);
+				contentBuffer.append(newStr);
+				break;
+			}else if (index == dbContentBuffer.length()) {
+				String newStr;
+				newStr = contentBuffer.substring(index);
+				dbContentBuffer.append(newStr);
+				break;
+			}  else if (contentBuffer.charAt(index) == dbContentBuffer
+					.charAt(index)) {
 				index++;
 				continue;
 			} else if (contentBuffer.substring(index, index + 17).equals(
@@ -313,8 +325,8 @@ public class SyncManerger extends HttpServlet {
 							"</span>")) {
 				int last = contentBuffer.indexOf(">", index);
 				String newStr;
-				
-				//deal with last index
+
+				// deal with last index
 				if (last == contentBuffer.length() - 1) {
 					newStr = contentBuffer.substring(index);
 				} else {
@@ -328,9 +340,9 @@ public class SyncManerger extends HttpServlet {
 					|| dbContentBuffer.substring(index, index + 7).equals(
 							"</span>")) {
 				int last = dbContentBuffer.indexOf(">", index);
-				String newStr ;
-				
-				//deal with last index
+				String newStr;
+
+				// deal with last index
 				if (last == dbContentBuffer.length() - 1) {
 					newStr = dbContentBuffer.substring(index);
 				} else {
