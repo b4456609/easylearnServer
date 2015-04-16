@@ -184,12 +184,15 @@ public class SyncManerger extends HttpServlet {
 		 allFolder.put("id", "allfolder");
 		 allFolder.put("name", "全部的懶人包");
 		 allFolder.put("pack", allPackIdArray);
+		 
+		 System.out.println("allPackIdArray" + allPackIdArray);
 		
 		// put folder in result jsonArray
 		responseJson.put("folder", folderArray);
 
 		// get packId jsonArray by userid in folder has pack
-		JSONArray packArray = db.getPackIDArray(userId);
+		//JSONArray packArray = db.getPackIDArray(userId);
+		JSONArray packArray = allPackIdArray;
 		for (int i = 0; i < packArray.length(); i++) {
 			String packId = packArray.getJSONObject(i).getString("pack_id");
 			// get pack by packId
