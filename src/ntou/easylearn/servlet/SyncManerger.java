@@ -184,6 +184,7 @@ public class SyncManerger extends HttpServlet {
 		 allFolder.put("id", "allfolder");
 		 allFolder.put("name", "全部的懶人包");
 		 allFolder.put("pack", allPackIdArray);
+		 folderArray.put(allFolder);
 		
 		// put folder in result jsonArray
 		responseJson.put("folder", folderArray);
