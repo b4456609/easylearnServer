@@ -419,13 +419,13 @@ public class DBManerger {
 		JSONArray jsonArray = new JSONArray();
 
 		try {
-			selectSQL = "SELECT  `pack_id` "
-					+ "FROM `easylearn`.`folder_has_pack`";
+			selectSQL = "SELECT  `id` "
+					+ "FROM `easylearn`.`pack`";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			rs = pStat.executeQuery();
 
 			while (rs.next()) {
-				jsonArray.put(rs.getString("pack_id"));
+				jsonArray.put(rs.getString("id"));
 			}
 
 		} catch (SQLException e) {
