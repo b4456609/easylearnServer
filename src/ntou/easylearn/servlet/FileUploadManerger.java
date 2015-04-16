@@ -43,23 +43,22 @@ public class FileUploadManerger extends HttpServlet {
 	protected void doPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 		String packId = request.getParameter("pack_id");
-		String versionId = request.getParameter("version_id");
 		String img = request.getParameter("file");
 		String filename = request.getParameter("filename");
-		
+
 		int start = img.indexOf(',');
 		img = img.substring(start + 1);
-		
-		decode(img, packId, versionId, filename);
+
+		decode(img, packId, filename);
 	}
-	
-	private void decode(String img, String packId, String versionId, String filename) {
+
+	private void decode(String img, String packId, String filename) {
 		try {
 			// Note preferred way of declaring an array variable
 			byte[] data = Base64.getDecoder().decode(img);
 
-			String path = "D:" + File.separator + "easylearn" + File.separator +  packId + File.separator + versionId + File.separator
-					+ filename;
+			String path = "D:" + File.separator + "easylearn" + File.separator
+					+ packId + File.separator + filename;
 			// (use relative path for Unix systems)
 			File f = new File(path);
 			// (works for both Windows and Linux)
