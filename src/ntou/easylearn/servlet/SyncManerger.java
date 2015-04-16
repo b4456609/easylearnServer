@@ -169,6 +169,22 @@ public class SyncManerger extends HttpServlet {
 					db.getPackIDArray(userId, folderArray.getJSONObject(i)
 							.getString("id")));
 		}
+		
+		//for test put all folder in
+		for (int folderArrayIter = 0; folderArrayIter < folderArray.length(); folderArrayIter++) {
+			String foldername = folderArray.getJSONObject(folderArrayIter).getString("name");
+			if(foldername.equals("全部的懶人包")){
+				 folderArray.remove(folderArrayIter);
+				 
+			}
+		}
+		
+		JSONArray allPackIdArray = db.getAllPackIDArray();
+		 JSONObject allFolder = new JSONObject();
+		 allFolder.put("id", "allfolder");
+		 allFolder.put("name", "全部的懶人包");
+		 allFolder.put("pack", allPackIdArray);
+		
 		// put folder in result jsonArray
 		responseJson.put("folder", folderArray);
 

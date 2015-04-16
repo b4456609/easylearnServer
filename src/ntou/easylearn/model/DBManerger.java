@@ -413,6 +413,29 @@ public class DBManerger {
 		}
 		return jsonArray;
 	}
+	
+	public JSONArray getAllPackIDArray() {
+
+		JSONArray jsonArray = new JSONArray();
+
+		try {
+			selectSQL = "SELECT  `pack_id` "
+					+ "FROM `easylearn`.`folder_has_pack`";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			rs = pStat.executeQuery();
+
+			while (rs.next()) {
+				jsonArray.put(rs.getString("pack_id"));
+			}
+
+		} catch (SQLException e) {
+			System.out.println("[DBManerger getPackIDArray] Exception :"
+					+ e.toString());
+		} finally {
+			closeDatabaseConnection();
+		}
+		return jsonArray;
+	}
 
 	public JSONArray getPackIDArray(String userId) {
 
