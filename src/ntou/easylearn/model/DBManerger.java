@@ -1156,7 +1156,7 @@ public class DBManerger {
 		try {
 			selectSQL = "SELECT `id`, `content`, `create_time`, `is_public`, `creator_user_id` "
 					+ "FROM `easylearn`.`version`"
-					+ "WHERE `version`.pack_id` = ?";
+					+ "WHERE `version`.`pack_id` = ?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, packId);
 			rs = pStat.executeQuery();
