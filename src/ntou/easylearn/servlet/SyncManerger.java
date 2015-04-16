@@ -488,7 +488,6 @@ public class SyncManerger extends HttpServlet {
 			// get comment id
 			String commentId = comment.getString("id");
 			if (db.getComment(commentId).length() == 0) {
-				System.out.println(db.getComment(commentId).length());
 				// add comment
 				db.addComment(commentId, comment.getString("content"),
 						comment.getLong("create_time"), noteId, userId);
