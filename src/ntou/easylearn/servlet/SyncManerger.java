@@ -33,7 +33,7 @@ public class SyncManerger extends HttpServlet {
 	private long syncTimeStamp;
 	private JSONObject responseJson;
 	private JSONObject syncInfo = new JSONObject();
-	private JSONArray uploadFile = new JSONArray();
+	private JSONArray uploadFile;
 
 	/**
 	 * @see HttpServlet#HttpServlet()
@@ -202,7 +202,7 @@ public class SyncManerger extends HttpServlet {
 
 			// get pack's version jsonArray by userId , version_pack_id in
 			// user_has_version and version
-			JSONArray version = db.getPacksVersion(packId, userId);
+			JSONArray version = db.getPacksVersion(packId);
 			for (int j = 0; j < version.length(); j++) {
 				String versionId = version.getJSONObject(j).getString("id");
 
@@ -225,13 +225,14 @@ public class SyncManerger extends HttpServlet {
 							db.getComments(noteId));
 					System.out.println(noteId + "   " + db.getComments(noteId));
 				}
-				System.out.println(notes.length());
+				//System.out.println(notes.length());
 				// put notes in version
 				version.getJSONObject(j).put("note", notes);
 
-				// put version in pack
-				pack.put("version", version);
+				
 			}
+			// put version in pack
+			pack.put("version", version);
 			// remove pack id
 			pack.remove("id");
 			// put pack in responseJson
@@ -293,8 +294,9 @@ public class SyncManerger extends HttpServlet {
 						pack.getBoolean("is_public"),
 						pack.getString("creator_user_id"),
 						pack.getString("cover_filename"));
-				JSONObject newFile = new JSONObject();
+				
 				if (!pack.getString("cover_filename").equals("")) {
+					JSONObject newFile = new JSONObject();
 					newFile.put("name", pack.getString("cover_filename"));
 					newFile.put("version_id", "");
 					newFile.put("version_pack_id", packId);
@@ -437,8 +439,9 @@ public class SyncManerger extends HttpServlet {
 			JSONArray fileArray) throws JSONException {
 		// get db file array
 		JSONArray dbFileArray = db.getFile(versionId);
-
-		System.out.println(fileArray);
+		
+		System.out.println("[dbFileArray]" + dbFileArray);
+		System.out.println("[fileArray]" + fileArray);
 
 		// delete file
 		for (int j = 0; j < dbFileArray.length(); j++) {
@@ -462,6 +465,7 @@ public class SyncManerger extends HttpServlet {
 		for (int i = 0; i < fileArray.length(); i++) {
 			// get file name
 			String name = fileArray.getString(i);
+			System.out.println("[fileArray.length() i ]" + i);
 
 			if (db.getFile(versionId, name).length() == 0) {
 				db.addFile(name, versionId, packId);
@@ -469,6 +473,7 @@ public class SyncManerger extends HttpServlet {
 				newFile.put("name", name);
 				newFile.put("version_id", versionId);
 				newFile.put("version_pack_id", packId);
+				System.out.println("[newFile]" + newFile);
 				uploadFile.put(newFile);
 			}
 		}

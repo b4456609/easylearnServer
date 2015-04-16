@@ -1149,6 +1149,30 @@ public class DBManerger {
 		}
 		return jsonArray;
 	}
+	
+	public JSONArray getPacksVersion(String packId) {
+		JSONArray jsonArray = new JSONArray();
+
+		try {
+			selectSQL = "SELECT `id`, `content`, `create_time`, `is_public`, `creator_user_id` "
+					+ "FROM `easylearn`.`version`"
+					+ "WHERE `version`.pack_id` = ?";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			pStat.setString(1, packId);
+			rs = pStat.executeQuery();
+
+			jsonArray = ResultSetConverter.convert(rs);
+		} catch (SQLException e) {
+			System.out.println("[DBManerger getPacksVersion] Exception :"
+					+ e.toString());
+		} catch (JSONException e) {
+			System.out.print("[DBManerger getPacksVersion] Exception :");
+			e.printStackTrace();
+		} finally {
+			closeDatabaseConnection();
+		}
+		return jsonArray;
+	}
 
 	public JSONArray getBookmark(String user_id, String versionid) {
 		JSONArray jsonArray = new JSONArray();
