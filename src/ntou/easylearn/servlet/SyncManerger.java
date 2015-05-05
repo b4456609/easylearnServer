@@ -43,6 +43,29 @@ public class SyncManerger extends HttpServlet {
 
 	}
 
+	private void initial() {
+
+		// initial set success sync
+		responseJson = new JSONObject();
+		syncInfo = new JSONObject();
+		uploadFile = new JSONArray();
+
+		// create current time stamp
+		Calendar calendar = Calendar.getInstance();
+		Date now = calendar.getTime();
+		syncTimeStamp = now.getTime();
+
+		try {
+			syncInfo.put("status", "success");
+			syncInfo.put("timestamp", syncTimeStamp);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+		// prepare db
+		db = new DBManerger();
+	}
+
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse
 	 *      response)
@@ -86,29 +109,6 @@ public class SyncManerger extends HttpServlet {
 			response.getWriter().write(responseJson.toString());
 			// System.out.println(responseJson.toString());
 		}
-	}
-
-	private void initial() {
-
-		// initial set success sync
-		responseJson = new JSONObject();
-		syncInfo = new JSONObject();
-		uploadFile = new JSONArray();
-
-		// create current time stamp
-		Calendar calendar = Calendar.getInstance();
-		Date now = calendar.getTime();
-		syncTimeStamp = now.getTime();
-
-		try {
-			syncInfo.put("status", "success");
-			syncInfo.put("timestamp", syncTimeStamp);
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-
-		// prepare db
-		db = new DBManerger();
 	}
 
 	// decide server or client has newer data by last_sync_time
