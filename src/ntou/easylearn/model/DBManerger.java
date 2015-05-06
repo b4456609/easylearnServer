@@ -164,7 +164,7 @@ public class DBManerger {
 			String last_sync_time,int version, String user_id) {
 		try {
 			String updateSQL = "UPDATE setting "
-					+ "SET wifi_sync = ?, mobile_network_sync = ?, last_sync_time = ?, version = ?"
+					+ "SET wifi_sync = ?, mobile_network_sync = ?, last_sync_time = ?, version = ? "
 					+ "WHERE user_id =?";
 			pStat = dbConnection.prepareStatement(updateSQL);
 			pStat.setBoolean(1, wifi_sync);
@@ -173,15 +173,15 @@ public class DBManerger {
 			pStat.setInt(4, version);
 			pStat.setString(5, user_id);
 			pStat.executeUpdate();
-			return ("[DBManerger getSetting] Success");
+			return ("[DBManerger updateSetting] Success");
 		}
 		/*--------------------- failed to inserting data to database  ---------------------*/
 		catch (SQLException e) {
-			System.out.println("[DBManerger getSetting] :" + e.toString());
+			System.out.println("[DBManerger updateSetting] :" + e.toString());
 		} finally {
 			closeDatabaseConnection();
 		}
-		return "[DBManerger getSetting] Fail";
+		return "[DBManerger updateSetting] Fail";
 	}
 
 	public String syncTime(String last_sync_time, String user_id) {
@@ -347,7 +347,7 @@ public class DBManerger {
 	
 	public String deleteUserFolder(String userId) {
 		try {
-			String DELETE_SQL = "DELETE FROM `folder` " + "WHERE user_id= ?";
+			String DELETE_SQL = "DELETE FROM `easylearn`.`folder` " + "WHERE user_id= ?";
 			pStat = dbConnection.prepareStatement(DELETE_SQL);
 			pStat.setString(1, userId);
 			pStat.executeUpdate();
@@ -355,11 +355,11 @@ public class DBManerger {
 		}
 		/*--------------------- failed to inserting data to database  ---------------------*/
 		catch (SQLException e) {
-			System.out.println("[DBManerger deleteFolder] :" + e.toString());
+			System.out.println("[DBManerger deleteUserFolder] :" + e.toString());
 		} finally {
 			closeDatabaseConnection();
 		}
-		return "[DBManerger deleteFolder] Fail";
+		return "[DBManerger deleteUserFolder] Fail";
 	}
 
 	/**

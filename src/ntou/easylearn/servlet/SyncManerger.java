@@ -118,12 +118,13 @@ public class SyncManerger extends HttpServlet {
 	}
 
 	private boolean isConflict() throws JSONException {
-		JSONObject setting = userData.getJSONObject("setting");		
+		JSONObject setting = userData.getJSONObject("setting");
 		JSONObject dbSetting = db.getSetting(userId);
-		
-		//new user no setting in db
-		if(dbSetting.length() == 0) return false;
-		
+
+		// new user no setting in db
+		if (dbSetting.length() == 0)
+			return false;
+
 		// conflict happen
 		if ((dbSetting.getInt("version") != setting.getInt("version"))
 				&& setting.getBoolean("modified")) {
@@ -135,12 +136,13 @@ public class SyncManerger extends HttpServlet {
 	// decide server or client has newer data by last_sync_time
 	private boolean isClientNewer() throws JSONException {
 
-		JSONObject setting = userData.getJSONObject("setting");		
+		JSONObject setting = userData.getJSONObject("setting");
 		JSONObject dbSetting = db.getSetting(userId);
-		
-		//new user no setting in db
-		if(dbSetting.length() == 0) return true;
-		
+
+		// new user no setting in db
+		if (dbSetting.length() == 0)
+			return true;
+
 		// conflict happen
 		if ((dbSetting.getInt("version") == setting.getInt("version"))
 				&& setting.getBoolean("modified")) {
@@ -221,8 +223,7 @@ public class SyncManerger extends HttpServlet {
 
 				// get bookmark jsonArray by version and userid in bookmark
 				// add bookmark jsonArray to Version
-				versionItem.put("bookmark",
-						db.getBookmark(userId, versionId));
+				versionItem.put("bookmark", db.getBookmark(userId, versionId));
 
 				// get file jsonArray by version_id
 				// add file jsonArray to Version
@@ -255,12 +256,14 @@ public class SyncManerger extends HttpServlet {
 
 	private void syncBaseOnClient() throws JSONException {
 		System.out.println("syncBaseOnClient");
-		
-		//get db version and add one
+
+		// get db version and add one
+		int version = userData.getJSONObject("setting").getInt("version");
 		JSONObject DBsetting = db.getSetting(userId);
-		int version = DBsetting.getInt("version");
-		version++;
-		
+		if (DBsetting.length() != 0) {
+			version = DBsetting.getInt("version");
+			version++;
+		}
 		// update setting
 		JSONObject setting = userData.getJSONObject("setting");
 		db.updateSetting(setting.getBoolean("wifi_sync"), setting
@@ -338,7 +341,7 @@ public class SyncManerger extends HttpServlet {
 	}
 
 	private void updateVersion(String id, String content, long create_time,
-			String packId, boolean is_public,int version, String versionId)
+			String packId, boolean is_public, int version, String versionId)
 			throws JSONException {
 		String dbContent = db.getVersion(versionId).getString("content");
 		StringBuffer dbContentBuffer = new StringBuffer(dbContent);
@@ -393,12 +396,13 @@ public class SyncManerger extends HttpServlet {
 				contentBuffer.insert(index, newStr);
 				index = last;
 			} else {
-				db.updateVersion(id, content, create_time, packId, is_public,version);
+				db.updateVersion(id, content, create_time, packId, is_public,
+						version);
 				return;
 			}
 		}
 		db.updateVersion(id, contentBuffer.toString(), create_time, packId,
-				is_public,version);
+				is_public, version);
 	}
 
 	private void versionSyncBaseOnclient(String packId, JSONArray versionArray)
@@ -417,13 +421,15 @@ public class SyncManerger extends HttpServlet {
 						version.getString("content"),
 						version.getLong("create_time"), packId,
 						version.getBoolean("is_public"),
-						version.getString("creator_user_id"),version.getInt("version"));
+						version.getString("creator_user_id"),
+						version.getInt("version"));
 			} else {
 				// yes update it
 				updateVersion(version.getString("id"),
 						version.getString("content"),
 						version.getLong("create_time"), packId,
-						version.getBoolean("is_public"),version.getInt("version"), versionId);
+						version.getBoolean("is_public"),
+						version.getInt("version"), versionId);
 			}
 
 			// add user has version
