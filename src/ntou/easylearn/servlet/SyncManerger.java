@@ -120,11 +120,24 @@ public class SyncManerger extends HttpServlet {
 	private boolean isConflict() throws JSONException {
 		JSONObject setting = userData.getJSONObject("setting");
 		JSONObject dbSetting = db.getSetting(userId);
-
+		
+		System.out.println("[isConflict]db version" +dbSetting.getInt("version"));
+		System.out.println("[isConflict]user version" +setting.getInt("version"));
+		System.out.println("[isConflict]user modified" + setting.getBoolean("modified"));
+				
 		// new user no setting in db
-		if (dbSetting.length() == 0)
+		if (dbSetting.length() == 0) {
+			db.addUser(userId, userData.getString("name"));
+			db.addSetting(userId);
 			return false;
+		}
 
+		// old user new device
+		if (setting.getInt("version") == 0) {
+			System.out.println("[isConflict] (new user)");
+			return false;
+		}
+		
 		// conflict happen
 		if ((dbSetting.getInt("version") != setting.getInt("version"))
 				&& setting.getBoolean("modified")) {
@@ -136,18 +149,23 @@ public class SyncManerger extends HttpServlet {
 	// decide server or client has newer data by last_sync_time
 	private boolean isClientNewer() throws JSONException {
 
-		JSONObject setting = userData.getJSONObject("setting");
-		JSONObject dbSetting = db.getSetting(userId);
+		int settingVersion = userData.getJSONObject("setting")
+				.getInt("version");
+		int dbSettingVersion = db.getSetting(userId).getInt("version");
 
-		// new user no setting in db
-		if (dbSetting.length() == 0)
-			return true;
+		boolean modified = userData.getJSONObject("setting").getBoolean(
+				"modified");
 
+		System.out.println(settingVersion);
+		System.out.println(dbSettingVersion);
+		System.out.println(modified);
+		
 		// conflict happen
-		if ((dbSetting.getInt("version") == setting.getInt("version"))
-				&& setting.getBoolean("modified")) {
+		if ((settingVersion == dbSettingVersion) && modified) {
+			System.out.println("[isClientNewer] true");
 			return true;
 		}
+		System.out.println("[isClientNewer] false");
 		return false;
 	}
 
