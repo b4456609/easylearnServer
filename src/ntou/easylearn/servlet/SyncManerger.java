@@ -32,7 +32,7 @@ public class SyncManerger extends HttpServlet {
 	private DBManerger db;
 	private long syncTimeStamp;
 	private JSONObject responseJson;
-	private JSONObject syncInfo = new JSONObject();
+	private JSONObject syncInfo;
 	private JSONArray uploadFile;
 
 	/**
@@ -90,55 +90,63 @@ public class SyncManerger extends HttpServlet {
 			userId = userData.getString("id");
 			folderData = syncData.getJSONArray("folder");
 
-			// decide server or client has newer data by last_sync_time
-			if (isClientNewer()) {
-				syncBaseOnClient();
+			if (!isConflict()) {
+				// decide server or client has newer data by last_sync_time
+				if (isClientNewer()) {
+					syncBaseOnClient();
+				}
+				syncBaseOnServer();
+
+				syncInfo.put("upload_file", uploadFile);
+				responseJson.put("sync", syncInfo);
+
+				// update sync time to db
+				db.syncTime(new Timestamp(syncTimeStamp).toString(), userId);
+			} else {
+				syncInfo.remove("status");
+				syncInfo.put("status", "conflict");
+				responseJson.put("sync", syncInfo);
 			}
-			syncBaseOnServer();
-
-			syncInfo.put("upload_file", uploadFile);
-			responseJson.put("sync", syncInfo);
-
-			// update sync time to db
-			db.syncTime(new Timestamp(syncTimeStamp).toString(), userId);
 		} catch (JSONException e) {
 			e.printStackTrace();
 			exceptionHandler();
 		} finally {
 			response.setContentType("application/json");
 			response.getWriter().write(responseJson.toString());
-			// System.out.println(responseJson.toString());
+			System.out.println(responseJson.toString());
 		}
+	}
+
+	private boolean isConflict() throws JSONException {
+		JSONObject setting = userData.getJSONObject("setting");		
+		JSONObject dbSetting = db.getSetting(userId);
+		
+		//new user no setting in db
+		if(dbSetting.length() == 0) return false;
+		
+		// conflict happen
+		if ((dbSetting.getInt("version") != setting.getInt("version"))
+				&& setting.getBoolean("modified")) {
+			return true;
+		}
+		return false;
 	}
 
 	// decide server or client has newer data by last_sync_time
 	private boolean isClientNewer() throws JSONException {
 
-		// get user's last sync time from server
+		JSONObject setting = userData.getJSONObject("setting");		
 		JSONObject dbSetting = db.getSetting(userId);
-		// this user not exit in db
-		if (dbSetting.length() == 0) {
-			db.addUser(userId, userData.getString("name"));
-			db.addSetting(userId);
+		
+		//new user no setting in db
+		if(dbSetting.length() == 0) return true;
+		
+		// conflict happen
+		if ((dbSetting.getInt("version") == setting.getInt("version"))
+				&& setting.getBoolean("modified")) {
 			return true;
 		}
-
-		long dbSyncTime = dbSetting.getLong("last_sync_time");
-
-		// get user's last sync time from client
-		long clientSyncTime = userData.getJSONObject("setting").getLong(
-				"last_sync_time");
-
-		System.out.println("dbSyncTime" + dbSyncTime);
-		System.out.println("clientSyncTime" + clientSyncTime);
-		System.out.println(dbSyncTime - clientSyncTime);
-
-		// compare who's data are newer
-		// true mean clientSyncTime is after dbSyncTimeStamp
-		if (dbSyncTime < clientSyncTime)
-			return true;
-		else
-			return false;
+		return false;
 	}
 
 	private void exceptionHandler() {
@@ -157,7 +165,9 @@ public class SyncManerger extends HttpServlet {
 		System.out.println("syncBaseOnServer");
 		// get setting by userId
 		// add setting in result jsonArray
-		responseJson.put("setting", db.getSetting(userId));
+		JSONObject setting = db.getSetting(userId);
+		setting.put("modified", false);
+		responseJson.put("setting", setting);
 
 		// get folder jsonArray by userid
 		JSONArray folderArray = db.getFolder(userId);
@@ -169,33 +179,34 @@ public class SyncManerger extends HttpServlet {
 					db.getPackIDArray(userId, folderArray.getJSONObject(i)
 							.getString("id")));
 		}
-		
-		//for test put all folder in
+
+		// for test put all folder in
 		for (int folderArrayIter = 0; folderArrayIter < folderArray.length(); folderArrayIter++) {
-			String foldername = folderArray.getJSONObject(folderArrayIter).getString("name");
-			if(foldername.equals("场胕")){
-				 folderArray.remove(folderArrayIter);
-				 
+			String foldername = folderArray.getJSONObject(folderArrayIter)
+					.getString("name");
+			if (foldername.equals("场胕")) {
+				folderArray.remove(folderArrayIter);
+
 			}
 		}
-		
+
 		JSONArray allPackIdArray = db.getAllPackIDArray();
-		 JSONObject allFolder = new JSONObject();
-		 allFolder.put("id", "allfolder");
-		 allFolder.put("name", "场胕");
-		 allFolder.put("pack", allPackIdArray);
-		 folderArray.put(allFolder);
-		 
-		 System.out.println("allPackIdArray" + allPackIdArray);
-		
+		JSONObject allFolder = new JSONObject();
+		allFolder.put("id", "allfolder");
+		allFolder.put("name", "场胕");
+		allFolder.put("pack", allPackIdArray);
+		folderArray.put(allFolder);
+
+		System.out.println("allPackIdArray" + allPackIdArray);
+
 		// put folder in result jsonArray
 		responseJson.put("folder", folderArray);
 
 		// get packId jsonArray by user id in folder has pack
-		//JSONArray packArray = db.getPackIDArray(userId);
+		// JSONArray packArray = db.getPackIDArray(userId);
 		JSONArray packArray = allPackIdArray;
 		for (int i = 0; i < packArray.length(); i++) {
-			//String packId = packArray.getJSONObject(i).getString("pack_id");
+			// String packId = packArray.getJSONObject(i).getString("pack_id");
 			String packId = packArray.getString(i);
 			// get pack by packId
 			JSONObject pack = db.getPack(packId);
@@ -204,16 +215,18 @@ public class SyncManerger extends HttpServlet {
 			// user_has_version and version
 			JSONArray version = db.getPacksVersion(packId);
 			for (int j = 0; j < version.length(); j++) {
-				String versionId = version.getJSONObject(j).getString("id");
+				JSONObject versionItem = version.getJSONObject(j);
+				versionItem.put("modified", false);
+				String versionId = versionItem.getString("id");
 
 				// get bookmark jsonArray by version and userid in bookmark
 				// add bookmark jsonArray to Version
-				version.getJSONObject(j).put("bookmark",
+				versionItem.put("bookmark",
 						db.getBookmark(userId, versionId));
 
 				// get file jsonArray by version_id
 				// add file jsonArray to Version
-				version.getJSONObject(j).put("file", db.getFile(versionId));
+				versionItem.put("file", db.getFile(versionId));
 
 				// get notes jsonArray by version_id from version_has_note and
 				// note
@@ -225,11 +238,10 @@ public class SyncManerger extends HttpServlet {
 							db.getComments(noteId));
 					System.out.println(noteId + "   " + db.getComments(noteId));
 				}
-				//System.out.println(notes.length());
+				// System.out.println(notes.length());
 				// put notes in version
-				version.getJSONObject(j).put("note", notes);
+				versionItem.put("note", notes);
 
-				
 			}
 			// put version in pack
 			pack.put("version", version);
@@ -243,11 +255,17 @@ public class SyncManerger extends HttpServlet {
 
 	private void syncBaseOnClient() throws JSONException {
 		System.out.println("syncBaseOnClient");
+		
+		//get db version and add one
+		JSONObject DBsetting = db.getSetting(userId);
+		int version = DBsetting.getInt("version");
+		version++;
+		
 		// update setting
 		JSONObject setting = userData.getJSONObject("setting");
 		db.updateSetting(setting.getBoolean("wifi_sync"), setting
 				.getBoolean("mobile_network_sync"),
-				new Timestamp(syncTimeStamp).toString(), userId);
+				new Timestamp(syncTimeStamp).toString(), version, userId);
 
 		System.out.println("remove all setting");
 		// remove all userHasVersion convenient for sync
@@ -294,7 +312,7 @@ public class SyncManerger extends HttpServlet {
 						pack.getBoolean("is_public"),
 						pack.getString("creator_user_id"),
 						pack.getString("cover_filename"));
-				
+
 				if (!pack.getString("cover_filename").equals("")) {
 					JSONObject newFile = new JSONObject();
 					newFile.put("name", pack.getString("cover_filename"));
@@ -320,7 +338,7 @@ public class SyncManerger extends HttpServlet {
 	}
 
 	private void updateVersion(String id, String content, long create_time,
-			String packId, boolean is_public, String versionId)
+			String packId, boolean is_public,int version, String versionId)
 			throws JSONException {
 		String dbContent = db.getVersion(versionId).getString("content");
 		StringBuffer dbContentBuffer = new StringBuffer(dbContent);
@@ -333,12 +351,12 @@ public class SyncManerger extends HttpServlet {
 				newStr = dbContentBuffer.substring(index);
 				contentBuffer.append(newStr);
 				break;
-			}else if (index == dbContentBuffer.length()) {
+			} else if (index == dbContentBuffer.length()) {
 				String newStr;
 				newStr = contentBuffer.substring(index);
 				dbContentBuffer.append(newStr);
 				break;
-			}  else if (contentBuffer.charAt(index) == dbContentBuffer
+			} else if (contentBuffer.charAt(index) == dbContentBuffer
 					.charAt(index)) {
 				index++;
 				continue;
@@ -375,12 +393,12 @@ public class SyncManerger extends HttpServlet {
 				contentBuffer.insert(index, newStr);
 				index = last;
 			} else {
-				db.updateVersion(id, content, create_time, packId, is_public);
-				break;
+				db.updateVersion(id, content, create_time, packId, is_public,version);
+				return;
 			}
 		}
 		db.updateVersion(id, contentBuffer.toString(), create_time, packId,
-				is_public);
+				is_public,version);
 	}
 
 	private void versionSyncBaseOnclient(String packId, JSONArray versionArray)
@@ -399,13 +417,13 @@ public class SyncManerger extends HttpServlet {
 						version.getString("content"),
 						version.getLong("create_time"), packId,
 						version.getBoolean("is_public"),
-						version.getString("creator_user_id"));
+						version.getString("creator_user_id"),version.getInt("version"));
 			} else {
 				// yes update it
 				updateVersion(version.getString("id"),
 						version.getString("content"),
 						version.getLong("create_time"), packId,
-						version.getBoolean("is_public"), versionId);
+						version.getBoolean("is_public"),version.getInt("version"), versionId);
 			}
 
 			// add user has version
@@ -439,7 +457,7 @@ public class SyncManerger extends HttpServlet {
 			JSONArray fileArray) throws JSONException {
 		// get db file array
 		JSONArray dbFileArray = db.getFile(versionId);
-		
+
 		System.out.println("[dbFileArray]" + dbFileArray);
 		System.out.println("[fileArray]" + fileArray);
 

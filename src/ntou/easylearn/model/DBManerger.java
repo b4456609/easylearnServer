@@ -137,7 +137,7 @@ public class DBManerger {
 		JSONObject obj = new JSONObject();
 
 		try {
-			selectSQL = "SELECT `setting`.`wifi_sync`, `setting`.`mobile_network_sync`, `setting`.`last_sync_time`"
+			selectSQL = "SELECT `setting`.`wifi_sync`, `setting`.`mobile_network_sync`, `setting`.`last_sync_time`, `setting`.`version`"
 					+ " FROM `easylearn`.`setting`" + "WHERE `user_id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, userId);
@@ -161,16 +161,17 @@ public class DBManerger {
      * 
      */
 	public String updateSetting(boolean wifi_sync, boolean mobile_network_sync,
-			String last_sync_time, String user_id) {
+			String last_sync_time,int version, String user_id) {
 		try {
 			String updateSQL = "UPDATE setting "
-					+ "SET wifi_sync = ?, mobile_network_sync = ?, last_sync_time = ?"
+					+ "SET wifi_sync = ?, mobile_network_sync = ?, last_sync_time = ?, version = ?"
 					+ "WHERE user_id =?";
 			pStat = dbConnection.prepareStatement(updateSQL);
 			pStat.setBoolean(1, wifi_sync);
 			pStat.setBoolean(2, mobile_network_sync);
 			pStat.setString(3, last_sync_time);
-			pStat.setString(4, user_id);
+			pStat.setInt(4, version);
+			pStat.setString(5, user_id);
 			pStat.executeUpdate();
 			return ("[DBManerger getSetting] Success");
 		}
@@ -228,17 +229,18 @@ public class DBManerger {
 	}
 
 	public String updateVersion(String id, String content, long create_time,
-			String pack_id, boolean is_public) {
+			String pack_id, boolean is_public, int version) {
 		try {
 			String updateSQL = "UPDATE version "
-					+ "SET content = ?, create_time = ?, pack_id=?, is_public=? "
+					+ "SET content = ?, create_time = ?, pack_id=?, is_public=?, version=? "
 					+ "WHERE id =?";
 			pStat = dbConnection.prepareStatement(updateSQL);
 			pStat.setString(1, content);
 			pStat.setTimestamp(2, new Timestamp(create_time));
 			pStat.setString(3, pack_id);
 			pStat.setBoolean(4, is_public);
-			pStat.setString(5, id);
+			pStat.setInt(5, version);
+			pStat.setString(6, id);
 			pStat.executeUpdate();
 			return ("[DBManerger updateVersion] Success");
 		}
@@ -667,7 +669,7 @@ public class DBManerger {
 		JSONObject obj = new JSONObject();
 
 		try {
-			selectSQL = "SELECT `id`, `content`, `create_time`, `pack_id`, `is_public`, `creator_user_id` FROM `easylearn`.`version`"
+			selectSQL = "SELECT `id`, `content`, `version`.`create_time`, `pack_id`, `is_public`, `creator_user_id`, `version`, `user`.`name` AS `creator_user_name` FROM `easylearn`.`version` INNER JOIN `easylearn`.`user` ON `creator_user_id` = `user`.`id`"
 					+ "WHERE `id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, versionId);
@@ -693,9 +695,9 @@ public class DBManerger {
      * 
      */
 	public String addVersion(String id, String content, long create_time,
-			String pack_id, boolean is_public, String creator_user_id) {
+			String pack_id, boolean is_public, String creator_user_id, int version) {
 		try {
-			String insertdbSQL = "INSERT INTO `easylearn`.`version` (`id`, `content`, `create_time`, `pack_id`, `is_public`, `creator_user_id`) VALUES (?, ?, ?, ?, ?, ?)";
+			String insertdbSQL = "INSERT INTO `easylearn`.`version` (`id`, `content`, `create_time`, `pack_id`, `is_public`, `creator_user_id`, `version`) VALUES (?, ?, ?, ?, ?, ?, ?)";
 			pStat = dbConnection.prepareStatement(insertdbSQL);
 			pStat.setString(1, id);
 			pStat.setString(2, content);
@@ -703,6 +705,7 @@ public class DBManerger {
 			pStat.setString(4, pack_id);
 			pStat.setBoolean(5, is_public);
 			pStat.setString(6, creator_user_id);
+			pStat.setInt(7, version);
 			pStat.executeUpdate();
 
 		} catch (SQLException e) {
@@ -1104,8 +1107,8 @@ public class DBManerger {
 		JSONObject obj = new JSONObject();
 
 		try {
-			selectSQL = "SELECT `id`, `name`, `description`, `create_time`, `tags`, `is_public`, `creator_user_id`, `cover_filename`"
-					+ " FROM `easylearn`.`pack` " + " WHERE `pack`.`id`=? ";
+			selectSQL = "SELECT `pack`.`id`, `pack`.`name`, `description`, `pack`.`create_time`, `tags`, `is_public`, `creator_user_id`, `cover_filename`, `user`.`name` AS `creator_user_name`"
+					+ " FROM `easylearn`.`pack` INNER JOIN `easylearn`.`user` ON `pack`.`creator_user_id` = `user`.`id`" + " WHERE `pack`.`id`=? ";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, packId);
 			rs = pStat.executeQuery();
@@ -1154,7 +1157,7 @@ public class DBManerger {
 		JSONArray jsonArray = new JSONArray();
 
 		try {
-			selectSQL = "SELECT `id`, `content`, `create_time`, `is_public`, `creator_user_id` "
+			selectSQL = "SELECT `id`, `content`, `create_time`, `is_public`, `creator_user_id`, `version` "
 					+ "FROM `easylearn`.`version`"
 					+ "WHERE `version`.`pack_id` = ?";
 			pStat = dbConnection.prepareStatement(selectSQL);
