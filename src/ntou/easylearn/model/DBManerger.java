@@ -669,8 +669,8 @@ public class DBManerger {
 		JSONObject obj = new JSONObject();
 
 		try {
-			selectSQL = "SELECT `id`, `content`, `version`.`create_time`, `pack_id`, `is_public`, `creator_user_id`, `version`, `user`.`name` AS `creator_user_name` FROM `easylearn`.`version` INNER JOIN `easylearn`.`user` ON `creator_user_id` = `user`.`id`"
-					+ "WHERE `id`=?";
+			selectSQL = "SELECT `version`.`id`, `content`, `version`.`create_time`, `pack_id`, `is_public`, `creator_user_id`, `version`, `user`.`name` AS `creator_user_name` FROM `easylearn`.`version` INNER JOIN `easylearn`.`user` ON `creator_user_id` = `user`.`id`"
+					+ "WHERE `user`.`id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, versionId);
 			rs = pStat.executeQuery();

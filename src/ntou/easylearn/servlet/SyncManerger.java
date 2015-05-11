@@ -91,12 +91,13 @@ public class SyncManerger extends HttpServlet {
 			folderData = syncData.getJSONArray("folder");
 
 			if (!isConflict()) {
+				// Update pack
+				packSyncBaseOnClient();
+
 				// decide server or client has newer data by last_sync_time
 				if (isClientNewer()) {
 					syncBaseOnClient();
 				}
-				// Update pack
-				packSyncBaseOnClient();
 				syncBaseOnServer();
 
 				syncInfo.put("upload_file", uploadFile);
