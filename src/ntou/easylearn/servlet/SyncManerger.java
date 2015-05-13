@@ -91,6 +91,9 @@ public class SyncManerger extends HttpServlet {
 			folderData = syncData.getJSONArray("folder");
 
 			if (!isConflict()) {
+				// Update pack
+				packSyncBaseOnClient();
+
 				// decide server or client has newer data by last_sync_time
 				if (isClientNewer()) {
 					syncBaseOnClient();
@@ -120,17 +123,19 @@ public class SyncManerger extends HttpServlet {
 	private boolean isConflict() throws JSONException {
 		JSONObject setting = userData.getJSONObject("setting");
 		JSONObject dbSetting = db.getSetting(userId);
-		
-		System.out.println("[isConflict]db version" +dbSetting.getInt("version"));
+
 		System.out.println("[isConflict]user version" +setting.getInt("version"));
 		System.out.println("[isConflict]user modified" + setting.getBoolean("modified"));
-				
+		
 		// new user no setting in db
 		if (dbSetting.length() == 0) {
 			db.addUser(userId, userData.getString("name"));
 			db.addSetting(userId);
 			return false;
 		}
+
+		
+		System.out.println("[isConflict]db version" +dbSetting.getInt("version"));
 
 		// old user new device
 		if (setting.getInt("version") == 0) {
@@ -301,8 +306,6 @@ public class SyncManerger extends HttpServlet {
 		System.out.println("folderSyncBaseOnClient");
 
 		System.out.println("packSyncBaseOnClient");
-		// Update pack
-		packSyncBaseOnClient();
 
 		// Update folder
 		folderSyncBaseOnClient();
