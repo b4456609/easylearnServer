@@ -1242,4 +1242,29 @@ public class DBManerger {
 		}
 		return ("[DBManerger deleteBookmark] Fail");
 	}
+	
+	//search pack name
+	public JSONArray search(String keyword) {
+		JSONArray jsonArray = null;
+
+		try {
+			selectSQL = "SELECT `pack`.`id`, `pack`.`name`, `description`, `pack`.`create_time`, `tags`, `is_public`, `creator_user_id`, `cover_filename`, `user`.`name` AS `creator_user_name`"
+					+ " FROM `easylearn`.`pack` INNER JOIN `easylearn`.`user` ON `pack`.`creator_user_id` = `user`.`id`" + " WHERE `pack`.`name` LIKE '%"+keyword+"%'";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			//pStat.setString(1, keyword);
+			rs = pStat.executeQuery();
+
+			jsonArray = ResultSetConverter.convert(rs);
+
+		} catch (SQLException e) {
+			System.out.println("[DBManerger search] Exception :"
+					+ e.toString());
+		} catch (JSONException e) {
+			System.out.print("[DBManerger search] Exception :");
+			e.printStackTrace();
+		} finally {
+			closeDatabaseConnection();
+		}
+		return jsonArray;
+	}
 }
