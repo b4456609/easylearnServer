@@ -313,6 +313,7 @@ public class SyncManerger extends HttpServlet {
 	}
 
 	private void packSyncBaseOnClient() throws JSONException {
+		System.out.println("[packSyncBaseOnClient()]");
 		Iterator packIter = syncData.keys();
 
 		// add and update folderHasPack in db
@@ -364,6 +365,7 @@ public class SyncManerger extends HttpServlet {
 	private void updateVersion(String id, String content, long create_time,
 			String packId, boolean is_public, int version, String versionId)
 			throws JSONException {
+		System.out.println(content);
 		String dbContent = db.getVersion(versionId).getString("content");
 		StringBuffer dbContentBuffer = new StringBuffer(dbContent);
 		StringBuffer contentBuffer = new StringBuffer(content);
@@ -422,12 +424,14 @@ public class SyncManerger extends HttpServlet {
 				return;
 			}
 		}
+		System.out.println(contentBuffer);
 		db.updateVersion(id, contentBuffer.toString(), create_time, packId,
 				is_public, version);
 	}
 
 	private void versionSyncBaseOnclient(String packId, JSONArray versionArray)
 			throws JSONException {
+		System.out.println("[versionSyncBaseOnclient()]");
 		for (int i = 0; i < versionArray.length(); i++) {
 			JSONObject version = versionArray.getJSONObject(i);
 
