@@ -20,15 +20,13 @@ import org.json.JSONObject;
 @WebServlet("/comment")
 public class CommentManerger extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	private final DBManerger db;
+	private DBManerger db;
 
 	/**
 	 * @see HttpServlet#HttpServlet()
 	 */
 	public CommentManerger() {
 		super();
-		// prepare db
-		db = new DBManerger();
 	}
 
 	/**
@@ -37,6 +35,8 @@ public class CommentManerger extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
+		// prepare db
+		db = new DBManerger();
 		request.setCharacterEncoding("UTF-8");
 		response.setCharacterEncoding("UTF-8");
 		
@@ -61,6 +61,8 @@ public class CommentManerger extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
+		// prepare db
+		db = new DBManerger();
 		request.setCharacterEncoding("UTF-8");
 		response.setCharacterEncoding("UTF-8");
 		
