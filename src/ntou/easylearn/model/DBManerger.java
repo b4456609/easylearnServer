@@ -688,6 +688,7 @@ public class DBManerger {
 		} finally {
 			closeDatabaseConnection();
 		}
+		System.out.println("VERSION:"+obj);
 		return obj;
 	}
 
@@ -1127,53 +1128,30 @@ public class DBManerger {
 		}
 		return obj;
 	}
-
-	public JSONArray getPacksVersion(String packId, String userId) {
-		JSONArray jsonArray = new JSONArray();
-
-		try {
-			selectSQL = "SELECT `id`, `content`, `create_time`, `is_public`, `creator_user_id` "
-					+ "FROM `easylearn`.`version` INNER JOIN `easylearn`.`user_has_version` ON version.id = user_has_version.version_id "
-					+ "WHERE `user_has_version`.`version_pack_id` = ? AND `user_has_version`.`user_id` = ?";
-			pStat = dbConnection.prepareStatement(selectSQL);
-			pStat.setString(1, packId);
-			pStat.setString(2, userId);
-			rs = pStat.executeQuery();
-
-			jsonArray = ResultSetConverter.convert(rs);
-		} catch (SQLException e) {
-			System.out.println("[DBManerger getPacksVersion] Exception :"
-					+ e.toString());
-		} catch (JSONException e) {
-			System.out.print("[DBManerger getPacksVersion] Exception :");
-			e.printStackTrace();
-		} finally {
-			closeDatabaseConnection();
-		}
-		return jsonArray;
-	}
 	
 	public JSONArray getPacksVersion(String packId) {
 		JSONArray jsonArray = new JSONArray();
 
 		try {
-			selectSQL = "SELECT `id`, `content`, `create_time`, `is_public`, `creator_user_id`, `version` "
-					+ "FROM `easylearn`.`version`"
-					+ "WHERE `version`.`pack_id` = ?";
+			selectSQL = "SELECT `id`, `content`,`create_time`, `is_public`, `creator_user_id`, `version`, `creator_user_name` "
+					+ "FROM `easylearn`.`get_packs_version` "
+					+ "WHERE `pack_id` = ?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, packId);
+			System.out.println(selectSQL);
 			rs = pStat.executeQuery();
 
 			jsonArray = ResultSetConverter.convert(rs);
 		} catch (SQLException e) {
-			System.out.println("[DBManerger getPacksVersion] Exception :"
+			System.out.println("[DBManerger getPacksVersion()] Exception :"
 					+ e.toString());
 		} catch (JSONException e) {
-			System.out.print("[DBManerger getPacksVersion] Exception :");
+			System.out.print("[DBManerger getPacksVersion()] Exception :");
 			e.printStackTrace();
 		} finally {
 			closeDatabaseConnection();
 		}
+		System.out.println(jsonArray);
 		return jsonArray;
 	}
 
