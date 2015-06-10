@@ -232,7 +232,7 @@ public class DBManerger {
 			String pack_id, boolean is_public, int version) {
 		try {
 			String updateSQL = "UPDATE version "
-					+ "SET content = ?, create_time = ?, pack_id=?, is_public=?, version=? "
+					+ "SET content = ?, create_time = ?, pack_id=?, is_public=?, version=?"
 					+ "WHERE id =?";
 			pStat = dbConnection.prepareStatement(updateSQL);
 			pStat.setString(1, content);
@@ -251,6 +251,26 @@ public class DBManerger {
 			closeDatabaseConnection();
 		}
 		return "[DBManerger updateVersion] Fail";
+	}
+	
+	public String updateVersionCount( String id, int count) {
+		try {
+			String updateSQL = "UPDATE version "
+					+ "SET view_count=? "
+					+ "WHERE id =?";
+			pStat = dbConnection.prepareStatement(updateSQL);
+			pStat.setInt(1, count);
+			pStat.setString(2, id);
+			pStat.executeUpdate();
+			return ("[DBManerger updateVersionCount] Success");
+		}
+		/*--------------------- failed to inserting data to database  ---------------------*/
+		catch (SQLException e) {
+			System.out.println("[DBManerger updateVersionCount] :" + e.toString());
+		} finally {
+			closeDatabaseConnection();
+		}
+		return "[DBManerger updateVersionCount] Fail";
 	}
 
 	/**
@@ -669,7 +689,7 @@ public class DBManerger {
 		JSONObject obj = new JSONObject();
 
 		try {
-			selectSQL = "SELECT `id`, `content`, `create_time`, `pack_id`, `is_public`, `creator_user_id`, `version`, `creator_user_name` FROM `easylearn`.`get_version` "
+			selectSQL = "SELECT `id`, `content`, `create_time`, `pack_id`, `is_public`, `creator_user_id`, `version`, `creator_user_name`, `view_count` FROM `easylearn`.`get_version` "
 					+ "WHERE `id`=?";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, versionId);
@@ -1133,7 +1153,7 @@ public class DBManerger {
 		JSONArray jsonArray = new JSONArray();
 
 		try {
-			selectSQL = "SELECT `id`, `content`,`create_time`, `is_public`, `creator_user_id`, `version`, `creator_user_name` "
+			selectSQL = "SELECT `id`, `content`,`create_time`, `is_public`, `creator_user_id`, `version`, `creator_user_name`, `view_count` "
 					+ "FROM `easylearn`.`get_packs_version` "
 					+ "WHERE `pack_id` = ?";
 			pStat = dbConnection.prepareStatement(selectSQL);

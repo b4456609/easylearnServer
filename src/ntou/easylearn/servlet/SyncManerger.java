@@ -243,6 +243,9 @@ public class SyncManerger extends HttpServlet {
 				JSONObject versionItem = version.getJSONObject(j);
 				versionItem.put("modified", false);
 				String versionId = versionItem.getString("id");
+				
+				//put empty user_view_count for app
+				versionItem.put("user_view_count", 0);
 
 				// get bookmark jsonArray by version and userid in bookmark
 				// add bookmark jsonArray to Version
@@ -438,6 +441,9 @@ public class SyncManerger extends HttpServlet {
 			// get version id
 			String versionId = version.getString("id");
 
+			//update version count
+			db.updateVersionCount(versionId, version.getInt("view_count") + version.getInt("user_view_count"));
+			
 			// update version or add version
 			// check is already in db?
 			if (db.getVersion(versionId).length() == 0) {
