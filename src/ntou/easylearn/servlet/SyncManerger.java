@@ -442,6 +442,7 @@ public class SyncManerger extends HttpServlet {
 			String versionId = version.getString("id");
 
 			//update version count
+			System.out.println("     view count :" + version.getInt("view_count") + " " + version.getInt("user_view_count"));
 			db.updateVersionCount(versionId, version.getInt("view_count") + version.getInt("user_view_count"));
 			
 			// update version or add version

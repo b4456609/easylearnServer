@@ -232,7 +232,7 @@ public class DBManerger {
 			String pack_id, boolean is_public, int version) {
 		try {
 			String updateSQL = "UPDATE version "
-					+ "SET content = ?, create_time = ?, pack_id=?, is_public=?, version=?"
+					+ "SET content = ?, create_time = ?, pack_id=?, is_public=?, version=? "
 					+ "WHERE id =?";
 			pStat = dbConnection.prepareStatement(updateSQL);
 			pStat.setString(1, content);
