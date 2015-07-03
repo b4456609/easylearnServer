@@ -41,12 +41,12 @@ public class CommentManerger extends HttpServlet {
 		response.setCharacterEncoding("UTF-8");
 		
 		String note_id = request.getParameter("note_id");
-        String lastest_create_time = request.getParameter("lastest_create_time");
-        System.out.println(note_id);
-        System.out.println(lastest_create_time);
-        long time = Long.valueOf(lastest_create_time).longValue();
+//        String lastest_create_time = request.getParameter("lastest_create_time");
+//        System.out.println(note_id);
+//        System.out.println(lastest_create_time);
+//        long time = Long.valueOf(lastest_create_time).longValue();
         
-        JSONArray comments = db.getCommentsAfterTime(note_id, time);
+        JSONArray comments = db.getComments(note_id);
         
         
         System.out.println(comments);
