@@ -72,7 +72,12 @@ public class SyncManerger extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("do post");
+		System.out.println("[Sync]start");
+		String clientOrigin = request.getHeader("origin");
+		response.setHeader("Access-Control-Allow-Origin", clientOrigin);
+		response.setHeader("Access-Control-Allow-Methods", "POST");
+        response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+        response.setHeader("Access-Control-Max-Age", "86400");
 
 		initial();
 
@@ -81,8 +86,7 @@ public class SyncManerger extends HttpServlet {
 			request.setCharacterEncoding("UTF-8");
 			response.setCharacterEncoding("UTF-8");
 			String syncJsonData = request.getParameter("sync_data");
-
-			// System.out.println(syncJsonData);
+			System.out.println("[Sync]data" + syncJsonData);
 
 			// extract sync data to user and setting
 			syncData = new JSONObject(syncJsonData);
@@ -116,7 +120,8 @@ public class SyncManerger extends HttpServlet {
 		} finally {
 			response.setContentType("application/json");
 			response.getWriter().write(responseJson.toString());
-			System.out.println(responseJson.toString());
+			System.out.println("[Sync]success" + responseJson.toString());
+			System.out.println();
 		}
 	}
 
@@ -124,8 +129,8 @@ public class SyncManerger extends HttpServlet {
 		JSONObject setting = userData.getJSONObject("setting");
 		JSONObject dbSetting = db.getSetting(userId);
 
-		System.out.println("[isConflict]user version" +setting.getInt("version"));
-		System.out.println("[isConflict]user modified" + setting.getBoolean("modified"));
+		System.out.println("[isConflict]user version:" +setting.getInt("version"));
+		System.out.println("[isConflict]user modified:" + setting.getBoolean("modified"));
 		
 		// new user no setting in db
 		if (dbSetting.length() == 0) {
@@ -135,7 +140,7 @@ public class SyncManerger extends HttpServlet {
 		}
 
 		
-		System.out.println("[isConflict]db version" +dbSetting.getInt("version"));
+		System.out.println("[isConflict]db version:" +dbSetting.getInt("version"));
 
 		// old user new device
 		if (setting.getInt("version") == 0) {
@@ -146,8 +151,10 @@ public class SyncManerger extends HttpServlet {
 		// conflict happen
 		if ((dbSetting.getInt("version") != setting.getInt("version"))
 				&& setting.getBoolean("modified")) {
+			System.out.println("[isConflict] true");
 			return true;
 		}
+		System.out.println("[isConflict] false");
 		return false;
 	}
 
@@ -161,9 +168,6 @@ public class SyncManerger extends HttpServlet {
 		boolean modified = userData.getJSONObject("setting").getBoolean(
 				"modified");
 
-		System.out.println(settingVersion);
-		System.out.println(dbSettingVersion);
-		System.out.println(modified);
 		
 		// conflict happen
 		if ((settingVersion == dbSettingVersion) && modified) {
@@ -175,7 +179,7 @@ public class SyncManerger extends HttpServlet {
 	}
 
 	private void exceptionHandler() {
-		System.out.println("fail");
+		System.out.println("[Sync]fail");
 		syncInfo.remove("status");
 		try {
 			syncInfo.put("status", "fail");
@@ -187,7 +191,7 @@ public class SyncManerger extends HttpServlet {
 	}
 
 	private void syncBaseOnServer() throws JSONException {
-		System.out.println("syncBaseOnServer");
+		System.out.println("[Sync]syncBaseOnServer");
 		// get setting by userId
 		// add setting in result jsonArray
 		JSONObject setting = db.getSetting(userId);
@@ -222,7 +226,6 @@ public class SyncManerger extends HttpServlet {
 		allFolder.put("pack", allPackIdArray);
 		folderArray.put(allFolder);
 
-		System.out.println("allPackIdArray" + allPackIdArray);
 
 		// put folder in result jsonArray
 		responseJson.put("folder", folderArray);
@@ -263,9 +266,8 @@ public class SyncManerger extends HttpServlet {
 					String noteId = notes.getJSONObject(k).getString("id");
 					notes.getJSONObject(k).put("comment",
 							db.getComments(noteId));
-					System.out.println(noteId + "   " + db.getComments(noteId));
 				}
-				// System.out.println(notes.length());
+
 				// put notes in version
 				versionItem.put("note", notes);
 
@@ -281,7 +283,7 @@ public class SyncManerger extends HttpServlet {
 	}
 
 	private void syncBaseOnClient() throws JSONException {
-		System.out.println("syncBaseOnClient");
+		System.out.println("[Sync]syncBaseOnClient");
 
 		// get db version and add one
 		int version = userData.getJSONObject("setting").getInt("version");
@@ -296,19 +298,10 @@ public class SyncManerger extends HttpServlet {
 				.getBoolean("mobile_network_sync"),
 				new Timestamp(syncTimeStamp).toString(), version, userId);
 
-		System.out.println("remove all setting");
-		// remove all userHasVersion convenient for sync
-		db.deleteUserHasVersion(userId);
 
-		// remove all userHasVersion convenient for sync
+		// remove all bookmark convenient for sync
 		db.deleteBookmark(userId);
 
-		// remove all userHasVersion convenient for sync
-		db.deleteBookmark(userId);
-
-		System.out.println("folderSyncBaseOnClient");
-
-		System.out.println("packSyncBaseOnClient");
 
 		// Update folder
 		folderSyncBaseOnClient();
@@ -329,6 +322,7 @@ public class SyncManerger extends HttpServlet {
 
 			// get json object
 			JSONObject pack = syncData.getJSONObject(packId);
+			
 
 			// update pack or add pack
 			// check is already in db?
@@ -357,18 +351,22 @@ public class SyncManerger extends HttpServlet {
 						pack.getBoolean("is_public"));
 
 			}
+			
 
 			// version
 			// get pack's version
 			JSONArray versionArray = pack.getJSONArray("version");
 			versionSyncBaseOnclient(packId, versionArray);
 		}
+		
+		//remove private backup version and remove private 
+		db.handleUserVersion(userId);
 	}
 
 	private void updateVersion(String id, String content, long create_time,
 			String packId, boolean is_public, int version, String versionId)
 			throws JSONException {
-		System.out.println(content);
+		System.out.println("[updateVersion]" + content);
 		String dbContent = db.getVersion(versionId).getString("content");
 		StringBuffer dbContentBuffer = new StringBuffer(dbContent);
 		StringBuffer contentBuffer = new StringBuffer(content);
@@ -389,6 +387,8 @@ public class SyncManerger extends HttpServlet {
 					.charAt(index)) {
 				index++;
 				continue;
+			} else if(contentBuffer.length() <= index + 17){
+				break;
 			} else if (contentBuffer.substring(index, index + 17).equals(
 					"<span class=\"note")
 					|| contentBuffer.substring(index, index + 7).equals(
@@ -402,7 +402,7 @@ public class SyncManerger extends HttpServlet {
 				} else {
 					newStr = contentBuffer.substring(index, last + 1);
 				}
-				System.out.println(newStr);
+				System.out.println("[updateVersion]" + newStr);
 				dbContentBuffer.insert(index, newStr);
 				index = last;
 			} else if (dbContentBuffer.substring(index, index + 17).equals(
@@ -418,18 +418,16 @@ public class SyncManerger extends HttpServlet {
 				} else {
 					newStr = dbContentBuffer.substring(index, last + 1);
 				}
-				System.out.println(newStr);
+				System.out.println("[updateVersion]" + newStr);
 				contentBuffer.insert(index, newStr);
 				index = last;
 			} else {
-				db.updateVersion(id, content, create_time, packId, is_public,
-						version);
+				db.updateVersion(id, content);
 				return;
 			}
 		}
-		System.out.println(contentBuffer);
-		db.updateVersion(id, contentBuffer.toString(), create_time, packId,
-				is_public, version);
+		System.out.println("[updateVersion]" + contentBuffer);
+		db.updateVersion(id, contentBuffer.toString());
 	}
 
 	private void versionSyncBaseOnclient(String packId, JSONArray versionArray)
@@ -442,7 +440,6 @@ public class SyncManerger extends HttpServlet {
 			String versionId = version.getString("id");
 
 			//update version count
-			System.out.println("     view count :" + version.getInt("view_count") + " " + version.getInt("user_view_count"));
 			db.updateVersionCount(versionId, version.getInt("view_count") + version.getInt("user_view_count"));
 			
 			// update version or add version
@@ -454,7 +451,8 @@ public class SyncManerger extends HttpServlet {
 						version.getLong("create_time"), packId,
 						version.getBoolean("is_public"),
 						version.getString("creator_user_id"),
-						version.getInt("version"));
+						version.getInt("version"),
+						version.getString("private_id"));
 			} else {
 				// yes update it
 				updateVersion(version.getString("id"),
@@ -463,9 +461,6 @@ public class SyncManerger extends HttpServlet {
 						version.getBoolean("is_public"),
 						version.getInt("version"), versionId);
 			}
-
-			// add user has version
-			db.addUserHasVersion(userId, versionId, packId);
 
 			// bookmark
 			// get bookmark array
@@ -496,8 +491,6 @@ public class SyncManerger extends HttpServlet {
 		// get db file array
 		JSONArray dbFileArray = db.getFile(versionId);
 
-		System.out.println("[dbFileArray]" + dbFileArray);
-		System.out.println("[fileArray]" + fileArray);
 
 		// delete file
 		for (int j = 0; j < dbFileArray.length(); j++) {
@@ -521,7 +514,6 @@ public class SyncManerger extends HttpServlet {
 		for (int i = 0; i < fileArray.length(); i++) {
 			// get file name
 			String name = fileArray.getString(i);
-			System.out.println("[fileArray.length() i ]" + i);
 
 			if (db.getFile(versionId, name).length() == 0) {
 				db.addFile(name, versionId, packId);
@@ -529,7 +521,6 @@ public class SyncManerger extends HttpServlet {
 				newFile.put("name", name);
 				newFile.put("version_id", versionId);
 				newFile.put("version_pack_id", packId);
-				System.out.println("[newFile]" + newFile);
 				uploadFile.put(newFile);
 			}
 		}
@@ -550,6 +541,9 @@ public class SyncManerger extends HttpServlet {
 				// add note
 				db.addNote(note.getString("id"), note.getString("content"),
 						note.getLong("create_time"), userId);
+			}
+			
+			if(db.getVersionHasNote(versionId, noteId).length() == 0){
 				// add version has note table
 				db.addVersionHasNote(versionId, packId, noteId);
 			}
@@ -570,7 +564,6 @@ public class SyncManerger extends HttpServlet {
 			// get comment id
 			String commentId = comment.getString("id");
 			if (db.getComment(commentId).length() == 0) {
-				System.out.println(db.getComment(commentId).length());
 				// add comment
 				db.addComment(commentId, comment.getString("content"),
 						comment.getLong("create_time"), noteId, userId);
