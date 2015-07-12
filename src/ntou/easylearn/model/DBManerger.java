@@ -56,6 +56,34 @@ public class DBManerger {
 			System.out.println("Close Exception :" + e.toString());
 		}
 	}
+	
+	/**
+	 * add user by name and id
+	 */
+	public String addFileData(String id, String deleteHash) {
+		// create current time stamp
+		Calendar calendar = Calendar.getInstance();
+		Date now = calendar.getTime();
+		Timestamp currentTimestamp = new java.sql.Timestamp(now.getTime());
+
+		try {
+
+			// insert sql
+			String insertdbSQL = "INSERT INTO `easylearn`.`file_data` (`id`,`deletehash`)VALUES(?,?)";
+			pStat = dbConnection.prepareStatement(insertdbSQL);
+			pStat.setString(1, id);
+			pStat.setString(2, deleteHash);
+			pStat.executeUpdate();
+
+		} catch (SQLException e) {
+			System.out
+					.println("[DBManerger addFileData] Exception:" + e.toString());
+			return "[DBManerger addFileData] Fail";
+		} finally {
+			closeDatabaseConnection();
+		}
+		return "[DBManerger addFileData] success";
+	}
 
 	/**
 	 * add user by name and id
