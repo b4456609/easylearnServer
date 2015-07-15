@@ -33,7 +33,6 @@ public class SyncManerger extends HttpServlet {
 	private long syncTimeStamp;
 	private JSONObject responseJson;
 	private JSONObject syncInfo;
-	private JSONArray uploadFile;
 
 	/**
 	 * @see HttpServlet#HttpServlet()
@@ -48,7 +47,6 @@ public class SyncManerger extends HttpServlet {
 		// initial set success sync
 		responseJson = new JSONObject();
 		syncInfo = new JSONObject();
-		uploadFile = new JSONArray();
 
 		// create current time stamp
 		Calendar calendar = Calendar.getInstance();
@@ -104,7 +102,6 @@ public class SyncManerger extends HttpServlet {
 				}
 				syncBaseOnServer();
 
-				syncInfo.put("upload_file", uploadFile);
 				responseJson.put("sync", syncInfo);
 
 				// update sync time to db
@@ -335,13 +332,6 @@ public class SyncManerger extends HttpServlet {
 						pack.getString("creator_user_id"),
 						pack.getString("cover_filename"));
 
-				if (!pack.getString("cover_filename").equals("")) {
-					JSONObject newFile = new JSONObject();
-					newFile.put("name", pack.getString("cover_filename"));
-					newFile.put("version_id", "");
-					newFile.put("version_pack_id", packId);
-					uploadFile.put(newFile);
-				}
 			}
 			// yes update it
 			else {
@@ -517,11 +507,6 @@ public class SyncManerger extends HttpServlet {
 
 			if (db.getFile(versionId, name).length() == 0) {
 				db.addFile(name, versionId, packId);
-				JSONObject newFile = new JSONObject();
-				newFile.put("name", name);
-				newFile.put("version_id", versionId);
-				newFile.put("version_pack_id", packId);
-				uploadFile.put(newFile);
 			}
 		}
 	}
