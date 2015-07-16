@@ -356,68 +356,76 @@ public class SyncManerger extends HttpServlet {
 	private void updateVersion(String id, String content, long create_time,
 			String packId, boolean is_public, int version, String versionId)
 			throws JSONException {
-		System.out.println("[updateVersion]" + content);
+		System.out.println("[updateVersionStart]" + content);
 		String dbContent = db.getVersion(versionId).getString("content");
+		System.out.println("[updateVersionStart]" + dbContent);
 		StringBuffer dbContentBuffer = new StringBuffer(dbContent);
 		StringBuffer contentBuffer = new StringBuffer(content);
 		int index = 0;
-		while ((index < contentBuffer.length())
-				&& (index < dbContentBuffer.length())) {
-			if (index == contentBuffer.length()) {
-				String newStr;
-				newStr = dbContentBuffer.substring(index);
-				contentBuffer.append(newStr);
-				break;
-			} else if (index == dbContentBuffer.length()) {
-				String newStr;
-				newStr = contentBuffer.substring(index);
-				dbContentBuffer.append(newStr);
-				break;
-			} else if (contentBuffer.charAt(index) == dbContentBuffer
-					.charAt(index)) {
-				index++;
-				continue;
-			} else if(contentBuffer.length() <= index + 17){
-				break;
-			} else if (contentBuffer.substring(index, index + 17).equals(
-					"<span class=\"note")
-					|| contentBuffer.substring(index, index + 7).equals(
-							"</span>")) {
-				int last = contentBuffer.indexOf(">", index);
-				String newStr;
-
-				// deal with last index
-				if (last == contentBuffer.length() - 1) {
-					newStr = contentBuffer.substring(index);
-				} else {
-					newStr = contentBuffer.substring(index, last + 1);
-				}
-				System.out.println("[updateVersion]" + newStr);
-				dbContentBuffer.insert(index, newStr);
-				index = last;
-			} else if (dbContentBuffer.substring(index, index + 17).equals(
-					"<span class=\"note")
-					|| dbContentBuffer.substring(index, index + 7).equals(
-							"</span>")) {
-				int last = dbContentBuffer.indexOf(">", index);
-				String newStr;
-
-				// deal with last index
-				if (last == dbContentBuffer.length() - 1) {
-					newStr = dbContentBuffer.substring(index);
-				} else {
-					newStr = dbContentBuffer.substring(index, last + 1);
-				}
-				System.out.println("[updateVersion]" + newStr);
-				contentBuffer.insert(index, newStr);
-				index = last;
-			} else {
-				db.updateVersion(id, content);
+		int clientIndex = contentBuffer.indexOf("<span class=\"note", index);
+		int dbIndex = dbContentBuffer.indexOf("<span class=\"note", index);
+		
+		if(clientIndex == -1 && dbIndex == -1) return;
+		else if(clientIndex >= 0 && dbIndex == -1){
+			//update use client
+			db.updateVersion(id, content);
+			return;
+		}
+		else if(clientIndex == -1 && dbIndex >= 0){
+			//return do nothing
+			//db has new
+			return;
+		}
+		
+		while(true){
+			clientIndex = contentBuffer.indexOf("<span class=\"note", index);
+			dbIndex = dbContentBuffer.indexOf("<span class=\"note", index);
+			System.out.println("clientIndex"+clientIndex);
+			System.out.println("dbIndex"+dbIndex);
+			if(clientIndex == -1 && dbIndex == -1){
+				//result
+				db.updateVersion(id, contentBuffer.toString());
 				return;
 			}
+			else if (clientIndex != -1 && dbIndex == -1){
+				versionInsert(index, clientIndex, contentBuffer, dbContentBuffer);				
+			}
+			else if (clientIndex == -1 && dbIndex != -1){
+				versionInsert(index, dbIndex, dbContentBuffer, contentBuffer);
+			}
+			else if(clientIndex == dbIndex){
+				index = clientIndex + 1;
+			}
+			else if(clientIndex < dbIndex){
+				versionInsert(index, clientIndex, contentBuffer, dbContentBuffer);
+			}
+			else if(clientIndex > dbIndex ){
+				versionInsert(index, dbIndex, dbContentBuffer, contentBuffer);
+			}
+			else{
+				System.out.println("error");
+			}
 		}
-		System.out.println("[updateVersion]" + contentBuffer);
-		db.updateVersion(id, contentBuffer.toString());
+		
+	}
+	
+	
+	private int versionInsert(int index,int clientIndex, StringBuffer contentBuffer, StringBuffer dbContentBuffer){
+		System.out.println("[versionInsert]clientIndex"+clientIndex);
+		System.out.println("[versionInsert]index"+index);
+		System.out.println("[versionInsert]contentBuffer"+contentBuffer);
+		System.out.println("[versionInsert]dbContentBuffer"+dbContentBuffer);
+		index = clientIndex;
+		int last = contentBuffer.indexOf(">", index);
+		String newStr = contentBuffer.substring(index, last + 1);
+		dbContentBuffer.insert(index, newStr);
+		index = last;
+		
+		index = contentBuffer.indexOf("</span>", index);
+		// deal with last index
+		dbContentBuffer.insert(index, "</span>");
+		index = index + 7;
+		return index;
 	}
 
 	private void versionSyncBaseOnclient(String packId, JSONArray versionArray)
