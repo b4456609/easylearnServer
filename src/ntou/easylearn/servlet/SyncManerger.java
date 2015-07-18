@@ -235,6 +235,7 @@ public class SyncManerger extends HttpServlet {
 			String packId = packArray.getString(i);
 			// get pack by packId
 			JSONObject pack = db.getPack(packId);
+			System.out.println(pack);
 
 			// get pack's version jsonArray by userId , version_pack_id in
 			// user_has_version and version
