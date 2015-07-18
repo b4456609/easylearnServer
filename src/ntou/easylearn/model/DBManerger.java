@@ -1367,4 +1367,44 @@ public class DBManerger {
 		}
 		return jsonArray;
 	}
+
+	public ArrayList<String> findDevice(String userId) {
+		ArrayList<String> result = new ArrayList<String>();
+		try {
+			selectSQL = "SELECT `device_id` "
+					+ " FROM `easylearn`.`device` "
+					+ " WHERE `user_id` = ?";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			pStat.setString(1, userId);
+			rs = pStat.executeQuery();
+
+			while(rs.next())
+				result.add(rs.getString("id"));
+
+		} catch (SQLException e) {
+			System.out
+					.println("[DBManerger search] Exception :" + e.toString());
+		} finally {
+			closeDatabaseConnection();
+		}
+		return result;
+	}
+	
+	public String addDevice(String userId, String userDeviceId) {
+		try {
+			String insertdbSQL = "INSERT INTO `easylearn`.`device` (`device_id`, `user_id`) VALUES (?, ?);";
+			pStat = dbConnection.prepareStatement(insertdbSQL);
+			pStat.setString(1, userDeviceId);
+			pStat.setString(2, userId);
+			pStat.executeUpdate();
+
+		} catch (SQLException e) {
+			System.out
+					.println("[DBManerger addDevice] Exception:" + e.toString());
+			return "[DBManerger addDevice] Fail";
+		} finally {
+			closeDatabaseConnection();
+		}
+		return "[DBManerger addDevice] success";
+	}
 }
