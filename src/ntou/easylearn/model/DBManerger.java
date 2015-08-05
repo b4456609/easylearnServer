@@ -1379,7 +1379,7 @@ public class DBManerger {
 			rs = pStat.executeQuery();
 
 			while(rs.next())
-				result.add(rs.getString("id"));
+				result.add(rs.getString("device_id"));
 
 		} catch (SQLException e) {
 			System.out

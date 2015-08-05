@@ -210,7 +210,7 @@ public class SyncManerger extends HttpServlet {
 		for (int folderArrayIter = 0; folderArrayIter < folderArray.length(); folderArrayIter++) {
 			String foldername = folderArray.getJSONObject(folderArrayIter)
 					.getString("name");
-			if (foldername.equals("¥þ³¡ªºÃi¤H¥]")) {
+			if (foldername.equals("å…¨éƒ¨çš„æ‡¶äººåŒ…")) {
 				folderArray.remove(folderArrayIter);
 
 			}
@@ -219,7 +219,7 @@ public class SyncManerger extends HttpServlet {
 		JSONArray allPackIdArray = db.getAllPackIDArray();
 		JSONObject allFolder = new JSONObject();
 		allFolder.put("id", "allfolder");
-		allFolder.put("name", "¥þ³¡ªºÃi¤H¥]");
+		allFolder.put("name", "å…¨éƒ¨çš„æ‡¶äººåŒ…");
 		allFolder.put("pack", allPackIdArray);
 		folderArray.put(allFolder);
 
