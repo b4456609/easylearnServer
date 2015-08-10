@@ -66,44 +66,49 @@ public class Pushnotication extends HttpServlet {
 			
 			JSONObject Account = array.getJSONObject(i);
 			JSONArray jsonArray = new JSONArray();   
-			//¨ú±oª«¥ó¤º¸ê®Æ
+			
 			System.out.println("name:"+Account.getString("name"));
 			RegIDs=db.findDevice(Account.getString("name"));
 
 			System.out.println("RegIDs"+RegIDs);	
 			for(String RegID:RegIDs){                     
-	              jsonArray.put(RegID);//±N¸ê®Æªí¤¤ªº¦URegistration ID©ñ¤JjsonArray¤¤
+	              jsonArray.put(RegID);//register ID
 	              System.out.println(RegID);
 			}
 			
 		    HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
 		    CloseableHttpClient closeableHttpClient = httpClientBuilder.build();
 		    HttpPost httpPost = new HttpPost("https://gcm-http.googleapis.com/gcm/send");
-		           //GCMªA°ÈªºAPI Key                    
+		           //GCM API keys    
 		           httpPost.addHeader("Authorization","key=AIzaSyB4hcjvpiAStqtjOqfVrAuDtIxm-NItaes");
-		          //¿ï¾Ü¨Ï¥ÎJSON«¬¦¡¶Ç°e¡A¦bHeader¤¤¥[¤WContent-Type¬°application/jsonªº°Ñ¼Æ
+		          //Content-Type application/json 
 		          httpPost.addHeader("Content-Type","application/json;");
 		          httpPost.addHeader("charset", "UTF-8"); 
-		          //«Ø¥ßJSON¤º®e
-		          JSONObject jsonObject = new JSONObject();   //­n¶Ç°eªºJSONª«¥ó
+		          // create json to put data
+		          JSONObject jsonObject = new JSONObject();   //JSON
 		          JSONObject data = new JSONObject();
-		      //¶ñ¦nJSONObjectªº¦U¶µ­È
-		          data.put("message","¦³¤H»P§A¤À¨ÉÃi¤H¥]");
+		          
+		          //Data to pass 
+		          data.put("message","æœ‰äººèˆ‡ä½ åˆ†äº«æ‡¶äººåŒ…");
 		          data.put("title","new message");
 		          data.put("soundname","beep.wav");
+		          data.put("packId",users.get("pack").toString());
+		          data.put("userName",users.get("userName").toString());
+		          
 				jsonObject.put("registration_ids",jsonArray);
+				jsonObject.put("collapse_key",users.get("pack").toString());
 				jsonObject.put("data",data);
 				//jsonObject.put("notification",data);
 				  
 			    
 			    System.out.println(jsonObject);
-		      //«Ø¥ßStringEntity«á¨Ï¥ÎHttp Post°e¥XJSON¸ê®Æ
+		      //String Entity utf-8
 		      httpPost.setEntity(new StringEntity(jsonObject.toString(),HTTP.UTF_8));
 		      
 		      
 		      HttpResponse response_srv = closeableHttpClient.execute(httpPost); 
 		      System.out.println(response_srv.toString());
-		 /*     //¨ú±o¦^¶ÇªºJSON®æ¦¡¸ê®Æ
+		 /*    json response
 		      String ss = EntityUtils.toString(response_srv.getEntity());
 		      JSONObject jj = null;
 				try {
