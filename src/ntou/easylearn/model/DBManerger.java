@@ -451,74 +451,16 @@ public class DBManerger {
 		}
 	}
 	
-	public void deleteDuplicate(String privateId, String create_time) {
+	public void deleteVersion(String id){
 		try {
-			System.out.println("[hasDuplicate]privateId"
-					+ privateId);
-			selectSQL = "DELETE FROM `easylearn`.`version` where private_id=? AND create_time =?";
+			selectSQL = "DELETE FROM `easylearn`.`version` where id=? ";
 			pStat = dbConnection.prepareStatement(selectSQL);
-			pStat.setString(1, privateId);
-			pStat.setString(2, create_time);
+			pStat.setString(1, id);
 			pStat.execute();
 			
 		} catch (SQLException e) {
-			System.out.println("[DBManerger deleteDuplicate] Exception :"
+			System.out.println("[DBManerger deleteVersion] Exception :"
 					+ e.toString());
-		}
-	}
-	
-	public void getMINDuplicate(String privateId) {
-		try {
-			selectSQL = "select MIN(create_time) as create_time from version where private_id=?";
-			pStat = dbConnection.prepareStatement(selectSQL);
-			pStat.setString(1, privateId);
-			rs = pStat.executeQuery();
-			
-			while (rs.next()) {
-				deleteDuplicate(privateId, rs.getString("create_time") );
-			}
-			
-		} catch (SQLException e) {
-			System.out.println("[DBManerger getMINDuplicate] Exception :"
-					+ e.toString());
-		}
-	}
-	
-
-	public void handleUserVersion(String userId) {
-		try {
-			selectSQL = "SELECT `private_id` "
-					+ "FROM `easylearn`.`version_to_public` "
-					+ "WHERE `creator_user_id`=?";
-			pStat = dbConnection.prepareStatement(selectSQL);
-			pStat.setString(1, userId);
-			rs = pStat.executeQuery();
-
-			while (rs.next()) {
-				version_to_public(rs.getString("private_id"));
-			}
-
-			boolean hasDuplicate = true;
-			while (hasDuplicate) {
-				hasDuplicate = false;
-				selectSQL = "SELECT * "
-						+ "FROM `easylearn`.`duplicate_private_version` "
-						+ "WHERE `creator_user_id`=?";
-				pStat = dbConnection.prepareStatement(selectSQL);
-				pStat.setString(1, userId);
-				rs = pStat.executeQuery();
-				
-				while (rs.next()) {
-					hasDuplicate = true;
-					getMINDuplicate(rs.getString("private_id"));
-				}
-			}
-
-		} catch (SQLException e) {
-			System.out.println("[DBManerger handleUserVersion] Exception :"
-					+ e.toString());
-		} finally {
-			closeDatabaseConnection();
 		}
 	}
 
