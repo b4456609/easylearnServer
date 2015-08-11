@@ -1309,6 +1309,27 @@ public class DBManerger {
 		}
 		return jsonArray;
 	}
+	
+	public boolean isDiveceIdExist(String deviceId){
+		try {
+			selectSQL = "SELECT `device_id` "
+					+ " FROM `easylearn`.`device` "
+					+ " WHERE `device_id` = ?";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			pStat.setString(1, deviceId);
+			rs = pStat.executeQuery();
+
+			while(rs.next())
+				return true;
+
+		} catch (SQLException e) {
+			System.out
+					.println("[DBManerger search] Exception :" + e.toString());
+		} finally {
+			closeDatabaseConnection();
+		}
+		return false;
+	}
 
 	public ArrayList<String> findDevice(String userId) {
 		ArrayList<String> result = new ArrayList<String>();

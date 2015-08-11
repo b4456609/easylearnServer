@@ -49,7 +49,7 @@ public class DeviceManerger extends HttpServlet {
 		System.out.println("[DeviceManerger]" + userId + userDeviceId);
 		
 		DBManerger db = new DBManerger();
-		if(db.findDevice(userId).size() == 0){
+		if(!db.isDiveceIdExist(userDeviceId)){
 			db.addDevice(userId, userDeviceId);
 		}
 	}
