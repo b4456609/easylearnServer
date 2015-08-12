@@ -57,7 +57,8 @@ public class PackManerger extends HttpServlet {
 		try {
 			for (int j = 0; j < version.length(); j++) {
 				JSONObject versionItem = version.getJSONObject(j);
-				versionItem.put("modified", false);
+				versionItem.put("user_view_count", 0);
+				versionItem.put("modified", "false");
 				String versionId = versionItem.getString("id");
 
 				// get bookmark jsonArray by version and userid in bookmark
@@ -76,7 +77,6 @@ public class PackManerger extends HttpServlet {
 					String noteId = notes.getJSONObject(k).getString("id");
 					notes.getJSONObject(k).put("comment",
 							db.getComments(noteId));
-					System.out.println(noteId + "   " + db.getComments(noteId));
 				}
 				// System.out.println(notes.length());
 				// put notes in version
