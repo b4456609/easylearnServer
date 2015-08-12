@@ -1310,9 +1310,9 @@ public class DBManerger {
 		return jsonArray;
 	}
 	
-	public boolean isDiveceIdExist(String deviceId){
+	public String getUserByDiveceId(String deviceId){
 		try {
-			selectSQL = "SELECT `device_id` "
+			selectSQL = "SELECT `user_id` "
 					+ " FROM `easylearn`.`device` "
 					+ " WHERE `device_id` = ?";
 			pStat = dbConnection.prepareStatement(selectSQL);
@@ -1320,7 +1320,7 @@ public class DBManerger {
 			rs = pStat.executeQuery();
 
 			while(rs.next())
-				return true;
+				return rs.getString("user_id");
 
 		} catch (SQLException e) {
 			System.out
@@ -1328,7 +1328,28 @@ public class DBManerger {
 		} finally {
 			closeDatabaseConnection();
 		}
-		return false;
+		return "";
+	}
+	
+	public String updateDiveceId(String userId, String deviceId){
+		try {
+			
+			String updateSQL = "UPDATE device " + "SET device_id = ?"
+					+ "WHERE user_id =? AND  device_id = ?";
+			pStat = dbConnection.prepareStatement(updateSQL);
+			pStat.setString(1, deviceId);
+			pStat.setString(2, userId);
+			pStat.setString(3, deviceId);
+			pStat.executeUpdate();
+			return ("[DBManerger updateDiveceId] Success");
+
+		} catch (SQLException e) {
+			System.out
+					.println("[DBManerger updateDiveceId] Exception :" + e.toString());
+		} finally {
+			closeDatabaseConnection();
+		}
+		return "[DBManerger updateDiveceId] Fail";
 	}
 
 	public ArrayList<String> findDevice(String userId) {

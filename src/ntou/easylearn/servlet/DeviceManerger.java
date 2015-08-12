@@ -49,8 +49,12 @@ public class DeviceManerger extends HttpServlet {
 		System.out.println("[DeviceManerger]" + userId + userDeviceId);
 		
 		DBManerger db = new DBManerger();
-		if(!db.isDiveceIdExist(userDeviceId)){
+		String recordUserId = db.getUserByDiveceId(userDeviceId);
+		if(recordUserId.equals("")){
 			db.addDevice(userId, userDeviceId);
+		}
+		else if(recordUserId != userId){
+			db.updateDiveceId(userId, userDeviceId);
 		}
 	}
 
