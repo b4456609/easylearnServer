@@ -1291,7 +1291,7 @@ public class DBManerger {
 		try {
 			selectSQL = "SELECT `pack`.`id`, `pack`.`name`, `description`, `pack`.`create_time`, `tags`, `is_public`, `creator_user_id`, `cover_filename`, `user`.`name` AS `creator_user_name`"
 					+ " FROM `easylearn`.`pack` INNER JOIN `easylearn`.`user` ON `pack`.`creator_user_id` = `user`.`id`"
-					+ " WHERE `pack`.`name` LIKE '%" + keyword + "%'";
+					+ " WHERE `pack`.`name` LIKE '%" + keyword + "%' OR `pack`.`tags` LIKE '%" + keyword + "%' OR `pack`.`description` LIKE '%" + keyword + "%'";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			// pStat.setString(1, keyword);
 			rs = pStat.executeQuery();
@@ -1324,7 +1324,7 @@ public class DBManerger {
 
 		} catch (SQLException e) {
 			System.out
-					.println("[DBManerger search] Exception :" + e.toString());
+					.println("[DBManerger getUserByDiveceId] Exception :" + e.toString());
 		} finally {
 			closeDatabaseConnection();
 		}
@@ -1367,7 +1367,7 @@ public class DBManerger {
 
 		} catch (SQLException e) {
 			System.out
-					.println("[DBManerger search] Exception :" + e.toString());
+					.println("[DBManerger findDevice] Exception :" + e.toString());
 		} finally {
 			closeDatabaseConnection();
 		}
