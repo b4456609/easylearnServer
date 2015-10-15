@@ -451,74 +451,16 @@ public class DBManerger {
 		}
 	}
 	
-	public void deleteDuplicate(String privateId, String create_time) {
+	public void deleteVersion(String id){
 		try {
-			System.out.println("[hasDuplicate]privateId"
-					+ privateId);
-			selectSQL = "DELETE FROM `easylearn`.`version` where private_id=? AND create_time =?";
+			selectSQL = "DELETE FROM `easylearn`.`version` where id=? ";
 			pStat = dbConnection.prepareStatement(selectSQL);
-			pStat.setString(1, privateId);
-			pStat.setString(2, create_time);
+			pStat.setString(1, id);
 			pStat.execute();
 			
 		} catch (SQLException e) {
-			System.out.println("[DBManerger deleteDuplicate] Exception :"
+			System.out.println("[DBManerger deleteVersion] Exception :"
 					+ e.toString());
-		}
-	}
-	
-	public void getMINDuplicate(String privateId) {
-		try {
-			selectSQL = "select MIN(create_time) as create_time from version where private_id=?";
-			pStat = dbConnection.prepareStatement(selectSQL);
-			pStat.setString(1, privateId);
-			rs = pStat.executeQuery();
-			
-			while (rs.next()) {
-				deleteDuplicate(privateId, rs.getString("create_time") );
-			}
-			
-		} catch (SQLException e) {
-			System.out.println("[DBManerger getMINDuplicate] Exception :"
-					+ e.toString());
-		}
-	}
-	
-
-	public void handleUserVersion(String userId) {
-		try {
-			selectSQL = "SELECT `private_id` "
-					+ "FROM `easylearn`.`version_to_public` "
-					+ "WHERE `creator_user_id`=?";
-			pStat = dbConnection.prepareStatement(selectSQL);
-			pStat.setString(1, userId);
-			rs = pStat.executeQuery();
-
-			while (rs.next()) {
-				version_to_public(rs.getString("private_id"));
-			}
-
-			boolean hasDuplicate = true;
-			while (hasDuplicate) {
-				hasDuplicate = false;
-				selectSQL = "SELECT * "
-						+ "FROM `easylearn`.`duplicate_private_version` "
-						+ "WHERE `creator_user_id`=?";
-				pStat = dbConnection.prepareStatement(selectSQL);
-				pStat.setString(1, userId);
-				rs = pStat.executeQuery();
-				
-				while (rs.next()) {
-					hasDuplicate = true;
-					getMINDuplicate(rs.getString("private_id"));
-				}
-			}
-
-		} catch (SQLException e) {
-			System.out.println("[DBManerger handleUserVersion] Exception :"
-					+ e.toString());
-		} finally {
-			closeDatabaseConnection();
 		}
 	}
 
@@ -1229,9 +1171,9 @@ public class DBManerger {
 		JSONObject obj = new JSONObject();
 
 		try {
-			selectSQL = "SELECT `pack`.`id`, `pack`.`name`, `description`, `pack`.`create_time`, `tags`, `is_public`, `creator_user_id`, `cover_filename`, `user`.`name` AS `creator_user_name`"
-					+ " FROM `easylearn`.`pack` INNER JOIN `easylearn`.`user` ON `pack`.`creator_user_id` = `user`.`id`"
-					+ " WHERE `pack`.`id`=? ";
+			selectSQL = "SELECT * "
+					+ " FROM `easylearn`.`get_pack` "
+					+ " WHERE `id`=? ";
 			pStat = dbConnection.prepareStatement(selectSQL);
 			pStat.setString(1, packId);
 			rs = pStat.executeQuery();
@@ -1366,5 +1308,87 @@ public class DBManerger {
 			closeDatabaseConnection();
 		}
 		return jsonArray;
+	}
+	
+	public String getUserByDiveceId(String deviceId){
+		try {
+			selectSQL = "SELECT `user_id` "
+					+ " FROM `easylearn`.`device` "
+					+ " WHERE `device_id` = ?";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			pStat.setString(1, deviceId);
+			rs = pStat.executeQuery();
+
+			while(rs.next())
+				return rs.getString("user_id");
+
+		} catch (SQLException e) {
+			System.out
+					.println("[DBManerger search] Exception :" + e.toString());
+		} finally {
+			closeDatabaseConnection();
+		}
+		return "";
+	}
+	
+	public String updateDiveceId(String userId, String deviceId){
+		try {
+			
+			String updateSQL = "UPDATE device " + "SET device_id = ?"
+					+ "WHERE user_id =? AND  device_id = ?";
+			pStat = dbConnection.prepareStatement(updateSQL);
+			pStat.setString(1, deviceId);
+			pStat.setString(2, userId);
+			pStat.setString(3, deviceId);
+			pStat.executeUpdate();
+			return ("[DBManerger updateDiveceId] Success");
+
+		} catch (SQLException e) {
+			System.out
+					.println("[DBManerger updateDiveceId] Exception :" + e.toString());
+		} finally {
+			closeDatabaseConnection();
+		}
+		return "[DBManerger updateDiveceId] Fail";
+	}
+
+	public ArrayList<String> findDevice(String userId) {
+		ArrayList<String> result = new ArrayList<String>();
+		try {
+			selectSQL = "SELECT `device_id` "
+					+ " FROM `easylearn`.`device` "
+					+ " WHERE `user_id` = ?";
+			pStat = dbConnection.prepareStatement(selectSQL);
+			pStat.setString(1, userId);
+			rs = pStat.executeQuery();
+
+			while(rs.next())
+				result.add(rs.getString("device_id"));
+
+		} catch (SQLException e) {
+			System.out
+					.println("[DBManerger search] Exception :" + e.toString());
+		} finally {
+			closeDatabaseConnection();
+		}
+		return result;
+	}
+	
+	public String addDevice(String userId, String userDeviceId) {
+		try {
+			String insertdbSQL = "INSERT INTO `easylearn`.`device` (`device_id`, `user_id`) VALUES (?, ?);";
+			pStat = dbConnection.prepareStatement(insertdbSQL);
+			pStat.setString(1, userDeviceId);
+			pStat.setString(2, userId);
+			pStat.executeUpdate();
+
+		} catch (SQLException e) {
+			System.out
+					.println("[DBManerger addDevice] Exception:" + e.toString());
+			return "[DBManerger addDevice] Fail";
+		} finally {
+			closeDatabaseConnection();
+		}
+		return "[DBManerger addDevice] success";
 	}
 }

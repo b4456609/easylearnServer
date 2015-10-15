@@ -35,7 +35,11 @@ public class PackManerger extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
-
+		String clientOrigin = request.getHeader("origin");
+		response.setHeader("Access-Control-Allow-Origin", clientOrigin);
+		response.setHeader("Access-Control-Allow-Methods", "POST");
+        response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+        response.setHeader("Access-Control-Max-Age", "86400");
 		request.setCharacterEncoding("UTF-8");
 		response.setCharacterEncoding("UTF-8");
 
@@ -53,7 +57,8 @@ public class PackManerger extends HttpServlet {
 		try {
 			for (int j = 0; j < version.length(); j++) {
 				JSONObject versionItem = version.getJSONObject(j);
-				versionItem.put("modified", false);
+				versionItem.put("user_view_count", 0);
+				versionItem.put("modified", "false");
 				String versionId = versionItem.getString("id");
 
 				// get bookmark jsonArray by version and userid in bookmark
@@ -72,7 +77,6 @@ public class PackManerger extends HttpServlet {
 					String noteId = notes.getJSONObject(k).getString("id");
 					notes.getJSONObject(k).put("comment",
 							db.getComments(noteId));
-					System.out.println(noteId + "   " + db.getComments(noteId));
 				}
 				// System.out.println(notes.length());
 				// put notes in version

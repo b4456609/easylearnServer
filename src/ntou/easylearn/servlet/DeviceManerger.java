@@ -10,19 +10,17 @@ import javax.servlet.http.HttpServletResponse;
 
 import ntou.easylearn.model.DBManerger;
 
-import org.json.JSONArray;
-
 /**
- * Servlet implementation class SearchManerger
+ * Servlet implementation class DeviceManerger
  */
-@WebServlet("/search")
-public class SearchManerger extends HttpServlet {
+@WebServlet("/device")
+public class DeviceManerger extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public SearchManerger() {
+    public DeviceManerger() {
         super();
         // TODO Auto-generated constructor stub
     }
@@ -31,6 +29,13 @@ public class SearchManerger extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String clientOrigin = request.getHeader("origin");
 		response.setHeader("Access-Control-Allow-Origin", clientOrigin);
 		response.setHeader("Access-Control-Allow-Methods", "POST");
@@ -38,20 +43,19 @@ public class SearchManerger extends HttpServlet {
         response.setHeader("Access-Control-Max-Age", "86400");
 		request.setCharacterEncoding("UTF-8");
 		response.setCharacterEncoding("UTF-8");
+				
+		String userId = request.getParameter("user_id");
+		String userDeviceId = request.getParameter("device_id");
+		System.out.println("[DeviceManerger]" + userId + userDeviceId);
 		
-		String searchText = request.getParameter("search_text");
-        System.out.println("search:"+searchText);
-        
-
-    	DBManerger db = new DBManerger();
-    	
-    	JSONArray search = db.search(searchText);
-        
-        System.out.println(search);
-        
-        response.setContentType("application/json");
-        if(search != null)
-        	response.getWriter().write(search.toString());
+		DBManerger db = new DBManerger();
+		String recordUserId = db.getUserByDiveceId(userDeviceId);
+		if(recordUserId.equals("")){
+			db.addDevice(userId, userDeviceId);
+		}
+		else if(recordUserId != userId){
+			db.updateDiveceId(userId, userDeviceId);
+		}
 	}
 
 }

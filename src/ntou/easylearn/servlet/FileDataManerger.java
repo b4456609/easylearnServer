@@ -30,6 +30,13 @@ public class FileDataManerger extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
+
+		String clientOrigin = request.getHeader("origin");
+		response.setHeader("Access-Control-Allow-Origin", clientOrigin);
+		response.setHeader("Access-Control-Allow-Methods", "POST");
+        response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+        response.setHeader("Access-Control-Max-Age", "86400");
+        
 		DBManerger db = new DBManerger();
 		String id = request.getParameter("id");
 		String deletehash = request.getParameter("deletehash");

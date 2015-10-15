@@ -33,7 +33,6 @@ public class SyncManerger extends HttpServlet {
 	private long syncTimeStamp;
 	private JSONObject responseJson;
 	private JSONObject syncInfo;
-	private JSONArray uploadFile;
 
 	/**
 	 * @see HttpServlet#HttpServlet()
@@ -48,7 +47,6 @@ public class SyncManerger extends HttpServlet {
 		// initial set success sync
 		responseJson = new JSONObject();
 		syncInfo = new JSONObject();
-		uploadFile = new JSONArray();
 
 		// create current time stamp
 		Calendar calendar = Calendar.getInstance();
@@ -76,8 +74,8 @@ public class SyncManerger extends HttpServlet {
 		String clientOrigin = request.getHeader("origin");
 		response.setHeader("Access-Control-Allow-Origin", clientOrigin);
 		response.setHeader("Access-Control-Allow-Methods", "POST");
-        response.setHeader("Access-Control-Allow-Headers", "Content-Type");
-        response.setHeader("Access-Control-Max-Age", "86400");
+		response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+		response.setHeader("Access-Control-Max-Age", "86400");
 
 		initial();
 
@@ -104,7 +102,6 @@ public class SyncManerger extends HttpServlet {
 				}
 				syncBaseOnServer();
 
-				syncInfo.put("upload_file", uploadFile);
 				responseJson.put("sync", syncInfo);
 
 				// update sync time to db
@@ -129,9 +126,11 @@ public class SyncManerger extends HttpServlet {
 		JSONObject setting = userData.getJSONObject("setting");
 		JSONObject dbSetting = db.getSetting(userId);
 
-		System.out.println("[isConflict]user version:" +setting.getInt("version"));
-		System.out.println("[isConflict]user modified:" + setting.getBoolean("modified"));
-		
+		System.out.println("[isConflict]user version:"
+				+ setting.getInt("version"));
+		System.out.println("[isConflict]user modified:"
+				+ setting.getBoolean("modified"));
+
 		// new user no setting in db
 		if (dbSetting.length() == 0) {
 			db.addUser(userId, userData.getString("name"));
@@ -139,15 +138,15 @@ public class SyncManerger extends HttpServlet {
 			return false;
 		}
 
-		
-		System.out.println("[isConflict]db version:" +dbSetting.getInt("version"));
+		System.out.println("[isConflict]db version:"
+				+ dbSetting.getInt("version"));
 
 		// old user new device
 		if (setting.getInt("version") == 0) {
 			System.out.println("[isConflict] (new user)");
 			return false;
 		}
-		
+
 		// conflict happen
 		if ((dbSetting.getInt("version") != setting.getInt("version"))
 				&& setting.getBoolean("modified")) {
@@ -168,7 +167,6 @@ public class SyncManerger extends HttpServlet {
 		boolean modified = userData.getJSONObject("setting").getBoolean(
 				"modified");
 
-		
 		// conflict happen
 		if ((settingVersion == dbSettingVersion) && modified) {
 			System.out.println("[isClientNewer] true");
@@ -213,7 +211,7 @@ public class SyncManerger extends HttpServlet {
 		for (int folderArrayIter = 0; folderArrayIter < folderArray.length(); folderArrayIter++) {
 			String foldername = folderArray.getJSONObject(folderArrayIter)
 					.getString("name");
-			if (foldername.equals("¥þ³¡ªºÃi¤H¥]")) {
+			if (foldername.equals("å…¨éƒ¨çš„æ‡¶äººåŒ…")) {
 				folderArray.remove(folderArrayIter);
 
 			}
@@ -222,10 +220,9 @@ public class SyncManerger extends HttpServlet {
 		JSONArray allPackIdArray = db.getAllPackIDArray();
 		JSONObject allFolder = new JSONObject();
 		allFolder.put("id", "allfolder");
-		allFolder.put("name", "¥þ³¡ªºÃi¤H¥]");
+		allFolder.put("name", "å…¨éƒ¨çš„æ‡¶äººåŒ…");
 		allFolder.put("pack", allPackIdArray);
 		folderArray.put(allFolder);
-
 
 		// put folder in result jsonArray
 		responseJson.put("folder", folderArray);
@@ -238,17 +235,18 @@ public class SyncManerger extends HttpServlet {
 			String packId = packArray.getString(i);
 			// get pack by packId
 			JSONObject pack = db.getPack(packId);
+			System.out.println(pack);
 
 			// get pack's version jsonArray by userId , version_pack_id in
 			// user_has_version and version
 			JSONArray version = db.getPacksVersion(packId);
 			for (int j = 0; j < version.length(); j++) {
 				JSONObject versionItem = version.getJSONObject(j);
-				versionItem.put("modified", false);
 				String versionId = versionItem.getString("id");
-				
-				//put empty user_view_count for app
+
+				// put empty user_view_count for app
 				versionItem.put("user_view_count", 0);
+				versionItem.put("modified", "false");
 
 				// get bookmark jsonArray by version and userid in bookmark
 				// add bookmark jsonArray to Version
@@ -298,10 +296,8 @@ public class SyncManerger extends HttpServlet {
 				.getBoolean("mobile_network_sync"),
 				new Timestamp(syncTimeStamp).toString(), version, userId);
 
-
 		// remove all bookmark convenient for sync
 		db.deleteBookmark(userId);
-
 
 		// Update folder
 		folderSyncBaseOnClient();
@@ -322,7 +318,6 @@ public class SyncManerger extends HttpServlet {
 
 			// get json object
 			JSONObject pack = syncData.getJSONObject(packId);
-			
 
 			// update pack or add pack
 			// check is already in db?
@@ -335,13 +330,6 @@ public class SyncManerger extends HttpServlet {
 						pack.getString("creator_user_id"),
 						pack.getString("cover_filename"));
 
-				if (!pack.getString("cover_filename").equals("")) {
-					JSONObject newFile = new JSONObject();
-					newFile.put("name", pack.getString("cover_filename"));
-					newFile.put("version_id", "");
-					newFile.put("version_pack_id", packId);
-					uploadFile.put(newFile);
-				}
 			}
 			// yes update it
 			else {
@@ -351,83 +339,94 @@ public class SyncManerger extends HttpServlet {
 						pack.getBoolean("is_public"));
 
 			}
-			
 
 			// version
 			// get pack's version
 			JSONArray versionArray = pack.getJSONArray("version");
 			versionSyncBaseOnclient(packId, versionArray);
 		}
-		
-		//remove private backup version and remove private 
-		db.handleUserVersion(userId);
+
 	}
 
 	private void updateVersion(String id, String content, long create_time,
-			String packId, boolean is_public, int version, String versionId)
-			throws JSONException {
-		System.out.println("[updateVersion]" + content);
-		String dbContent = db.getVersion(versionId).getString("content");
-		StringBuffer dbContentBuffer = new StringBuffer(dbContent);
-		StringBuffer contentBuffer = new StringBuffer(content);
-		int index = 0;
-		while ((index < contentBuffer.length())
-				&& (index < dbContentBuffer.length())) {
-			if (index == contentBuffer.length()) {
-				String newStr;
-				newStr = dbContentBuffer.substring(index);
-				contentBuffer.append(newStr);
-				break;
-			} else if (index == dbContentBuffer.length()) {
-				String newStr;
-				newStr = contentBuffer.substring(index);
-				dbContentBuffer.append(newStr);
-				break;
-			} else if (contentBuffer.charAt(index) == dbContentBuffer
-					.charAt(index)) {
-				index++;
-				continue;
-			} else if(contentBuffer.length() <= index + 17){
-				break;
-			} else if (contentBuffer.substring(index, index + 17).equals(
-					"<span class=\"note")
-					|| contentBuffer.substring(index, index + 7).equals(
-							"</span>")) {
-				int last = contentBuffer.indexOf(">", index);
-				String newStr;
+			String packId, boolean is_public, int version, String modified,
+			String versionId) throws JSONException {
+		if (modified.equals("false")) {
+			return;
+		} else if (modified.equals("delete")) {
+			db.deleteVersion(id);
+		} else {
+			System.out.println("[updateVersionStart]" + content);
+			String dbContent = db.getVersion(versionId).getString("content");
+			System.out.println("[updateVersionStart]" + dbContent);
+			StringBuffer dbContentBuffer = new StringBuffer(dbContent);
+			StringBuffer contentBuffer = new StringBuffer(content);
+			int index = 0;
+			int clientIndex = contentBuffer
+					.indexOf("<span class=\"note", index);
+			int dbIndex = dbContentBuffer.indexOf("<span class=\"note", index);
 
-				// deal with last index
-				if (last == contentBuffer.length() - 1) {
-					newStr = contentBuffer.substring(index);
-				} else {
-					newStr = contentBuffer.substring(index, last + 1);
-				}
-				System.out.println("[updateVersion]" + newStr);
-				dbContentBuffer.insert(index, newStr);
-				index = last;
-			} else if (dbContentBuffer.substring(index, index + 17).equals(
-					"<span class=\"note")
-					|| dbContentBuffer.substring(index, index + 7).equals(
-							"</span>")) {
-				int last = dbContentBuffer.indexOf(">", index);
-				String newStr;
-
-				// deal with last index
-				if (last == dbContentBuffer.length() - 1) {
-					newStr = dbContentBuffer.substring(index);
-				} else {
-					newStr = dbContentBuffer.substring(index, last + 1);
-				}
-				System.out.println("[updateVersion]" + newStr);
-				contentBuffer.insert(index, newStr);
-				index = last;
-			} else {
+			if (clientIndex == -1 && dbIndex == -1)
+				return;
+			else if (clientIndex >= 0 && dbIndex == -1) {
+				// update use client
 				db.updateVersion(id, content);
 				return;
+			} else if (clientIndex == -1 && dbIndex >= 0) {
+				// return do nothing
+				// db has new
+				return;
+			}
+
+			while (true) {
+				clientIndex = contentBuffer
+						.indexOf("<span class=\"note", index);
+				dbIndex = dbContentBuffer.indexOf("<span class=\"note", index);
+				System.out.println("clientIndex" + clientIndex);
+				System.out.println("dbIndex" + dbIndex);
+				if (clientIndex == -1 && dbIndex == -1) {
+					// result
+					db.updateVersion(id, contentBuffer.toString());
+					return;
+				} else if (clientIndex != -1 && dbIndex == -1) {
+					versionInsert(index, clientIndex, contentBuffer,
+							dbContentBuffer);
+				} else if (clientIndex == -1 && dbIndex != -1) {
+					versionInsert(index, dbIndex, dbContentBuffer,
+							contentBuffer);
+				} else if (clientIndex == dbIndex) {
+					index = clientIndex + 1;
+				} else if (clientIndex < dbIndex) {
+					versionInsert(index, clientIndex, contentBuffer,
+							dbContentBuffer);
+				} else if (clientIndex > dbIndex) {
+					versionInsert(index, dbIndex, dbContentBuffer,
+							contentBuffer);
+				} else {
+					System.out.println("error");
+				}
 			}
 		}
-		System.out.println("[updateVersion]" + contentBuffer);
-		db.updateVersion(id, contentBuffer.toString());
+
+	}
+
+	private int versionInsert(int index, int clientIndex,
+			StringBuffer contentBuffer, StringBuffer dbContentBuffer) {
+		System.out.println("[versionInsert]clientIndex" + clientIndex);
+		System.out.println("[versionInsert]index" + index);
+		System.out.println("[versionInsert]contentBuffer" + contentBuffer);
+		System.out.println("[versionInsert]dbContentBuffer" + dbContentBuffer);
+		index = clientIndex;
+		int last = contentBuffer.indexOf(">", index);
+		String newStr = contentBuffer.substring(index, last + 1);
+		dbContentBuffer.insert(index, newStr);
+		index = last;
+
+		index = contentBuffer.indexOf("</span>", index);
+		// deal with last index
+		dbContentBuffer.insert(index, "</span>");
+		index = index + 7;
+		return index;
 	}
 
 	private void versionSyncBaseOnclient(String packId, JSONArray versionArray)
@@ -439,12 +438,17 @@ public class SyncManerger extends HttpServlet {
 			// get version id
 			String versionId = version.getString("id");
 
-			//update version count
-			db.updateVersionCount(versionId, version.getInt("view_count") + version.getInt("user_view_count"));
-			
+			// update version count
+			db.updateVersionCount(versionId, version.getInt("view_count")
+					+ version.getInt("user_view_count"));
+
 			// update version or add version
 			// check is already in db?
 			if (db.getVersion(versionId).length() == 0) {
+				//delete no need to add to db
+				if (version.getString("modified").equals("delete")) {
+					continue;
+				}
 				// add pack
 				db.addVersion(version.getString("id"),
 						version.getString("content"),
@@ -453,13 +457,15 @@ public class SyncManerger extends HttpServlet {
 						version.getString("creator_user_id"),
 						version.getInt("version"),
 						version.getString("private_id"));
+				
 			} else {
 				// yes update it
 				updateVersion(version.getString("id"),
 						version.getString("content"),
 						version.getLong("create_time"), packId,
 						version.getBoolean("is_public"),
-						version.getInt("version"), versionId);
+						version.getInt("version"),
+						version.getString("modified"), versionId);
 			}
 
 			// bookmark
@@ -491,7 +497,6 @@ public class SyncManerger extends HttpServlet {
 		// get db file array
 		JSONArray dbFileArray = db.getFile(versionId);
 
-
 		// delete file
 		for (int j = 0; j < dbFileArray.length(); j++) {
 			// get file name
@@ -517,11 +522,6 @@ public class SyncManerger extends HttpServlet {
 
 			if (db.getFile(versionId, name).length() == 0) {
 				db.addFile(name, versionId, packId);
-				JSONObject newFile = new JSONObject();
-				newFile.put("name", name);
-				newFile.put("version_id", versionId);
-				newFile.put("version_pack_id", packId);
-				uploadFile.put(newFile);
 			}
 		}
 	}
@@ -542,8 +542,8 @@ public class SyncManerger extends HttpServlet {
 				db.addNote(note.getString("id"), note.getString("content"),
 						note.getLong("create_time"), userId);
 			}
-			
-			if(db.getVersionHasNote(versionId, noteId).length() == 0){
+
+			if (db.getVersionHasNote(versionId, noteId).length() == 0) {
 				// add version has note table
 				db.addVersionHasNote(versionId, packId, noteId);
 			}
